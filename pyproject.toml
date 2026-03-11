@@ -45,6 +45,7 @@ dependencies = [
     "shellingham==1.5.4",
     "sqlacodegen==4.0.2",
     "sqlalchemy==2.0.48",
+    "sqlmodel>=0.0.37",
     "starlette==0.52.1",
     "typeguard==4.5.1",
     "typer==0.24.1",

@@ -1,8 +1,15 @@
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI, HTTPException
 from pydantic import BaseModel, EmailStr
 from datetime import date
 # from typing import List
 from enum import Enum
+
+from sqlalchemy import select
+from sqlmodel import Session
+from .models import Usuarios, Salas, Canales, Mensajes, Amigos, t_usuarios_activos_sala, RolUsuarioCanal
+from .database import get_session
+
+
 
 app = FastAPI(title="Chat API", version="1.0")
 
@@ -10,23 +17,23 @@ class tipoSala (str,Enum):
     TEXTO = "texto"
     VOZ = "voz"
 
-# BaseModels para lecturas completas GET
-# lectura usuario
-class Usuario(BaseModel):
-        id_usuario: int
-        username: str
-        email: EmailStr
-# Basemodel para get lista de canales
-class Canal(BaseModel):
-    id_canal: int
-    nombre_canal: str
-    creador: int
-# Base model para get lista de salas
-class Sala(BaseModel):
-    id_sala: int
-    tipo: tipoSala
-    nombre_sala: str
-# Basemodel para credenciales
+# # BaseModels para lecturas completas GET
+# # lectura usuario
+# class Usuario(BaseModel):
+#         id_usuario: int
+#         username: str
+#         email: EmailStr
+# # Basemodel para get lista de canales
+# class Canal(BaseModel):
+#     id_canal: int
+#     nombre_canal: str
+#     creador: int
+# # Base model para get lista de salas
+# class Sala(BaseModel):
+#     id_sala: int
+#     tipo: tipoSala
+#     nombre_sala: str
+# # Basemodel para credenciales
 class Credenciales(BaseModel):
     username: str
     contrasenha: str
@@ -97,9 +104,18 @@ async def sign_in(usuario: UsuarioCreate):
 
 # Ver info usuario
 @app.get("/usuarios/{id_usuario}")
-async def datos_usuario(id_usuario: int):  
-    # TODO: query
-    return Usuario(id_usuario=id_usuario, username="test", email="test@test.com")
+async def datos_usuario(id_usuario: int, session: Session = Depends(get_session)):  
+    usuario = session.get(Usuarios, id_usuario)
+    if not usuario:
+        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+
+    return usuario.model_dump(exclude={"contraseña"})
+
+
+# @app.get("/usuarios/{id_usuario}")
+# async def datos_usuario(id_usuario: int):  
+#     # TODO: query
+#     return Usuario(id_usuario=id_usuario, username="test", email="test@test.com")
 
 # Actualizar usuario
 @app.put("/usuarios/{id_usuario}")
@@ -108,22 +124,23 @@ async def actualizar_usuario(id_usuario: int, user: UsuarioUpdate):
 
 # Eliminar usuario
 @app.delete("/usuarios/{id_usuario}")
-async def elimina_usuario(id_usuario):
+async def elimina_usuario(id_usuario: int):
     return {"message": "Usuario eliminado exitosamente"}
 
 
 
 # CANALES
 
-# Ver canales
-@app.get("/usuarios/{id_usuario}/canales")
-# async def get_canales_usuario(id_usuario: int)-> List[Canal]:
-async def get_canales_usuario(id_usuario: int):
-    # TODO: query  
-    return [
-        Canal(id_canal=1, nombre_canal="Canal_ejemplo", creador= 1),
-        Canal(id_canal=2, nombre_canal="Nombre_Empresa", creador= 2)
-    ]
+# # Ver canales
+# @app.get("/usuarios/{id_usuario}/canales")
+# # async def get_canales_usuario(id_usuario: int)-> List[Canal]:
+# async def get_canales_usuario(id_usuario: int, session: Session = Depends(get_session)):
+#     # Busca TODOS los canales DONDE id_usuario_dueno = id_usuario
+#     canales = session.exec(
+#         select(Canales).where(Canales.id_usuario_dueno == id_usuario)
+#     ).all()
+#     return canales
+
 # Crear canal
 @app.post("/usuarios/{id_usuario}/canales")
 async def crear_canal(id_usuario: int, canal: CanalCreate):
@@ -170,10 +187,10 @@ async def get_salas_canal(id_usuario: int, id_canal: int):
         {"id_sala": 3, "nombre": "", "tipo": "texto"}
     ]
 
-# Crear sala
-@app.post("/usuarios/{id_usuario}/canales/{id_canal}/salas") 
-async def crear_sala(id_usuario: int, id_canal: int, sala: Sala):
-    return 
+# # Crear sala
+# @app.post("/usuarios/{id_usuario}/canales/{id_canal}/salas") 
+# async def crear_sala(id_usuario: int, id_canal: int, sala: Sala):
+#     return 
 
 
 # actualizar sala
