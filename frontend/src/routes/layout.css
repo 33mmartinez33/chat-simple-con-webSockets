@@ -1,2 +1,9 @@
 @import 'tailwindcss';
 @plugin '@tailwindcss/forms';
+
+body{
+    text-align: center;
+    background-color: #36393f !important;
+    color: white;
+    font-family: system-ui, -apple-system, sans-serif;
+}
