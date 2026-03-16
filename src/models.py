@@ -51,11 +51,13 @@ class Amigos(SQLModel, table=True):
 class Canales(SQLModel, table=True):
     __table_args__ = (
         ForeignKeyConstraint(['id_usuario_dueno'], ['usuarios.id_usuario'], name='canales_id_usuario_dueno_fkey'),
-        PrimaryKeyConstraint('id_canal', name='canales_pkey')
+        PrimaryKeyConstraint('id_canal', name='canales_pkey'),
+        UniqueConstraint('nombre', name='canales_nombre_key') 
     )
 
     id_canal: int = Field(sa_column=Column('id_canal', Integer, primary_key=True))
     id_usuario_dueno: int = Field(sa_column=Column('id_usuario_dueno', Integer, nullable=False))
+    nombre: str = Field(sa_column=Column('nombre', String(100), nullable=False))
     contenido_principal: Optional[str] = Field(default=None, sa_column=Column('contenido_principal', Text))
 
     usuarios: 'Usuarios' = Relationship(back_populates='canales')
