@@ -1,0 +1,51 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv
+
+# Backend específico
+backend/.venv/
+backend/.env
+backend/__pycache__/
+
+# Frontend (preparado)
+frontend/node_modules/
+frontend/.svelte-kit/
+frontend/build/
+
+node_modules
+
+# Output
+.output
+.vercel
+.netlify
+.wrangler
+/.svelte-kit
+/build
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Env
+.env
+.env.*
+!.env.example
+!.env.test
+
+# Vite
+vite.config.js.timestamp-*
+vite.config.ts.timestamp-*
+
+# VSCode personal
+*.code-workspace
+.vscode/settings.json
+
+# Logs
+*.log
