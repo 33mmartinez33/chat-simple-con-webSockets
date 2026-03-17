@@ -3,7 +3,39 @@
 
 body{
     text-align: center;
-    background-color: #36393f !important;
+    background-color: #36393f;
     color: white;
     font-family: system-ui, -apple-system, sans-serif;
+}
+
+h1{
+    font-size: 60px;
+    text-align: center;
+}
+input{
+    border-radius: 8px;
+    width: 280px;
+    margin-bottom: 20px;
+    background-color: #1d1e29;
+}
+label{
+    display: block;
+    font-size: 18px;
+    text-align: left;
+    color: white;
+}
+
+.botonFormulario{
+    display: block;
+    width: 280px;
+    padding: 12px 24px;     
+    /* border: 2px solid #5865f2; */
+    background: #5865f2;
+    color: white;
+    border-radius: 6px;
+    font-size: 18px;
+    cursor: pointer;
+    margin-left: auto;
+    margin-right: auto;
+    margin-top: 30px;
 }
