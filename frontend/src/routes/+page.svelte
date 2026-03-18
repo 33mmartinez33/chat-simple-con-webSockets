@@ -1,36 +1,53 @@
 
-<script>
+<script lang="ts">
+import {goto} from '$app/navigation';
 function irARegistro() {
-    // añadir logica para el push.navigator
+    goto('/sign_in')
 } 
 
 function irAIniciarSesion() {
-    // añadir lógica
+        goto('/login')
 }
 </script>
 
 
 <main>
-    <h1>NEXUS</h1>
-    <p>Conecta. Chatea. Crea.</p>
-    <div>
-        <button onclick={irAIniciarSesion}>Iniciar sesión</button>
-        
-        <button onclick={irARegistro}>Registrarse</button>
+    <div id= "fondo">
+        <div>
+            <h1>NEXUS</h1>
+            <h2>Conecta. Chatea. Crea.</h2>
+            <div>
+                <button onclick={irAIniciarSesion}>Iniciar sesión</button>        
+                <button onclick={irARegistro}>Registrarse</button>
+            </div>
+        </div>
+
     </div>
 </main>
 
 <!-- Falta añadir tamaños variables segun ventana etc -->
 <style>
-    h1,p{
+    #fondo{
+        height: 100vh;
+        background-image: url("https://starwalk.space/gallery/images/what-is-space/1140x641.jpg");
+        background-size: cover;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    h1,h2{
         text-align: center;
     }
+    div{
+        display: block;
+    }
     h1{
-        margin-top: 300px;
+        /* margin-top: 300px; */
+        /* padding-top: 300px; */
         font-size: 60px;
         font-weight: bold;
     }
-    p{
+    h2{
         font-size: 32px;
     }
     button {

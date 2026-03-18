@@ -2,41 +2,34 @@ import datetime
 from typing import Dict
 
 from fastapi import Depends, FastAPI, HTTPException, WebSocket, WebSocketDisconnect
-from pydantic import BaseModel, EmailStr
-from _pydatetime import UTC, date
-# from typing import List
+from pydantic import BaseModel, ConfigDict, EmailStr, field_validator
+from datetime import UTC, date
 from enum import Enum
 
-from sqlalchemy import select
+from sqlmodel import select
 from sqlmodel import Session, and_, or_
 from .models import RolAdministradorParticipanteT, Usuarios, Salas, Canales, Mensajes, Amigos, t_usuarios_activos_sala, RolUsuarioCanal
 from .database import get_session
-
-
+from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI(title="Chat API", version="1.0")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],  # SvelteKit dev
+    allow_credentials=True,
+    allow_methods=["*"], 
+    allow_headers=["*"],
+    # max_age = 3600,
+)
+
 
 class tipoSala (str,Enum):
     TEXTO = "texto"
     VOZ = "voz"
 
-# # BaseModels para lecturas completas GET
-# # lectura usuario
-# class Usuario(BaseModel):
-#         id_usuario: int
-#         username: str
-#         email: EmailStr
-# # Basemodel para get lista de canales
-# class Canal(BaseModel):
-#     id_canal: int
-#     nombre_canal: str
-#     creador: int
-# # Base model para get lista de salas
-# class Sala(BaseModel):
-#     id_sala: int
-#     tipo: tipoSala
-#     nombre_sala: str
-# # Basemodel para credenciales
+
+ # Basemodel para credenciales
 class Credenciales(BaseModel):
     username: str
     contrasenha: str
@@ -53,7 +46,7 @@ class UsuarioCreate(BaseModel):
 class UsuarioUpdate(BaseModel):
     username: str | None = None
     contraseña: str | None = None
-    fecha_de_nacimiento: date | None = None
+    fecha_de_nacimiento: str | None = None
 
 class CanalCreate(BaseModel):
     nombre_canal: str
@@ -74,6 +67,7 @@ class SalaCreate(BaseModel):
 class SalaUpdate(BaseModel):
     tipo: tipoSala | None = None
     nombre_sala: str | None = None
+
 
 
 
@@ -127,19 +121,20 @@ async def son_amigos(session: Session, id_usuario1: int, id_usuario2: int):
 # Usuario inicia sesión
 @app.post("/login")
 async def login(creds: Credenciales, session: Session = Depends(get_session)):
-    if session.exec(
+    usuario = session.exec(
     select(Usuarios).where(
         Usuarios.username == creds.username,
         Usuarios.contraseña == creds.contrasenha  # TODO: hashear
     )
-).first():
-        token = "jwt_123"
-        return {"message": "Operación exitosa", "token": token}
+).first()
+    if usuario:
+        token = "jwt_123" # TODO token real OAuth2
+        return {"message": "Operación exitosa", "token": token, "id_usuario": usuario.id_usuario}
     else:
         raise HTTPException(status_code=401, detail = "Las credenciales introducidas no son correctas")
 
 
-    
+
 #  Crea usuario
 @app.post("/sign_in")
 async def sign_in(usuario: UsuarioCreate, session: Session = Depends(get_session)):  
@@ -167,7 +162,7 @@ async def sign_in(usuario: UsuarioCreate, session: Session = Depends(get_session
         return {
             "message": "Usuario creado exitosamente",
             "token": token,
-            "usuario": usuario_insertar
+            "id_usuario": usuario_insertar.id_usuario
         }
 
 
@@ -180,7 +175,6 @@ async def datos_usuario(id_usuario: int, session: Session = Depends(get_session)
     if not usuario:
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
     return usuario.model_dump(exclude={"contraseña"}) # mode_dump modifica  
-
 
 # Actualizar usuario
 @app.put("/usuarios/{id_usuario}")
@@ -397,17 +391,19 @@ async def get_amigos(id_usuario: int, session: Session = Depends(get_session)):
             Amigos.id_usuario2 == Usuarios.id_usuario
         ).where(
             Amigos.id_usuario1 == id_usuario
-        ).all()
-    )
-    return [
-    {
-        "id_amigo": amigo[1].id_usuario,
-        "username": amigo[1].username,
-        "email": amigo[1].email,
-        "fecha_amistad": amigo[0].fecha_amistad
-    }
-    for amigo in amigos
-]
+        )
+    ).all()
+
+    lista_amigos = []
+    for amigo in amigos:
+        lista_amigos.append({
+            "id_amigo": amigo[1].id_usuario,
+            "username": amigo[1].username,
+            "email": amigo[1].email,
+            "fecha_amistad": amigo[0].fecha_amistad
+        })
+
+    return lista_amigos
 
 
 # Añadir amigo
