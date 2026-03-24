@@ -1,4 +1,5 @@
 import datetime
+import json
 from typing import Dict
 
 from fastapi import Depends, FastAPI, HTTPException, WebSocket, WebSocketDisconnect
@@ -168,13 +169,24 @@ async def sign_in(usuario: UsuarioCreate, session: Session = Depends(get_session
 
 # USUARIOS
 
+# Ver todos los usuarios
+@app.get("/usuarios")
+async def get_todos_usuarios(q: str = "", session: Session = Depends(get_session)):
+    if q:
+        usuarios = session.exec(
+            select(Usuarios).where(Usuarios.username.contains(q))
+        ).all()
+    else:
+        usuarios = session.exec(select(Usuarios)).all()
+    return usuarios
+
 # Ver info usuario
 @app.get("/usuarios/{id_usuario}")
 async def datos_usuario(id_usuario: int, session: Session = Depends(get_session)):  
     usuario = session.get(Usuarios, id_usuario)
     if not usuario:
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
-    return usuario.model_dump(exclude={"contraseña"}) # mode_dump modifica  
+    return usuario.model_dump(exclude={"contraseña"}) # model_dump modifica  
 
 # Actualizar usuario
 @app.put("/usuarios/{id_usuario}")
@@ -205,6 +217,17 @@ async def elimina_usuario(id_usuario: int, session: Session = Depends(get_sessio
 
 # CANALES
 
+# Ver todos los canales
+@app.get("/canales")
+async def get_todos_canales(q: str = "", session: Session = Depends(get_session)):
+    if q:
+        canales = session.exec(
+            select(Canales).where(Canales.nombre.contains(q))
+        ).all()
+    else:
+        canales = session.exec(select(Canales)).all()
+    return canales
+
 # Ver canales
 @app.get("/usuarios/{id_usuario}/canales")
 async def get_canales_usuario(id_usuario: int, session: Session = Depends(get_session)):
@@ -222,12 +245,31 @@ async def get_canales_usuario(id_usuario: int, session: Session = Depends(get_se
     ).all()
     return canales
 
-# # ver todos los canales?
-# @app.get("/canales")
-# async def get_todos_canales(session: Session = Depends(get_session)):
+# Añadir canal a usuario
+@app.post("/usuarios/{id_usuario}/canales/{id_canal}")
+async def anhadir_canal_usuario(id_usuario: int, id_canal: int, session: Session = Depends(get_session)):
+    if not session.get(Usuarios, id_usuario) or not session.get(Canales, id_canal):
+        raise HTTPException(status_code=404, detail="Usuario o canal no encontrado")
+    elif session.exec(
+        select(RolUsuarioCanal).where(
+            RolUsuarioCanal.id_usuario == id_usuario,
+            RolUsuarioCanal.id_canal == id_canal
+        )
+    ).first():
+        raise HTTPException(status_code=400, detail="Ya sigues este canal")
+    else:
+        relacion = RolUsuarioCanal(
+            id_usuario=id_usuario,
+            id_canal=id_canal,
+            rol=RolAdministradorParticipanteT.PARTICIPANTE
+        )
+        session.add(relacion)
+        session.commit()
+        session.refresh(relacion)
+        return {"message": "Canal añadido"}
 
-#     return
 
+# TODO cambiar rol de un usuario en un canal a admin
 
 # Crear canal
 @app.post("/usuarios/{id_usuario}/canales")
@@ -258,11 +300,13 @@ async def crear_canal(id_usuario: int, canal: CanalCreate, session: Session = De
 @app.get("/usuarios/{id_usuario}/canales/{id_canal}")
 async def get_canal(id_usuario: int, id_canal: int, session: Session = Depends(get_session)):
     canal = session.get(Canales, id_canal)
+    rol = session.get(RolUsuarioCanal, (id_usuario, id_canal))
     if not canal:
         raise HTTPException(status_code=404, detail="Canal no encontrado")
-    elif not es_participante_o_admin(session, id_usuario, id_canal):
+    elif not rol:
       raise HTTPException(status_code=403, detail="No tienes acceso a este canal")
-    return canal
+    else:
+        return {**canal.model_dump(), "rol": rol.rol}
 
 
 # Actualizar contenido/nombre canal
@@ -339,7 +383,7 @@ async def crear_sala(id_usuario: int, id_canal: int, sala: SalaCreate, session: 
         sala_db: Salas = Salas(
             id_canal = id_canal,
             tipo = sala.tipo,
-            nombre = sala.nombre_sala
+            nombre_sala = sala.nombre_sala
         )
         session.add(sala_db)
         session.commit()
@@ -407,7 +451,7 @@ async def get_amigos(id_usuario: int, session: Session = Depends(get_session)):
 
 
 # Añadir amigo
-@app.put("/usuarios/{id_usuario}/amigos/{id_usuario2}")
+@app.post("/usuarios/{id_usuario}/amigos/{id_usuario2}")
 async def anhadir_amigo(id_usuario: int, id_usuario2: int, session: Session = Depends(get_session)):
     if not session.get(Usuarios, id_usuario) or not session.get(Usuarios, id_usuario2):
         raise HTTPException(status_code=404, detail="Usuario no encontrado")   
@@ -492,7 +536,7 @@ async def crear_mensaje_sala(
         id_sala=id_sala,
         id_usuario_emisor=id_usuario,
         contenido=contenido,
-        fecha=datetime.now(), 
+        fecha=datetime.datetime.now(UTC), 
     )
     session.add(mensaje)
     session.commit()
@@ -525,6 +569,8 @@ async def eliminar_mensaje_sala(id_usuario: int, id_canal: int, id_sala: int, id
         return {"message": "Mensaje eliminado exitosamente"}
     
 
+
+
 # Ver mensajes amigo
 @app.get("/usuarios/{id_usuario}/amigos/{id_usuario2}")
 async def get_mensajes_amigo(id_usuario: int, id_usuario2: int, session: Session = Depends(get_session)):
@@ -532,8 +578,9 @@ async def get_mensajes_amigo(id_usuario: int, id_usuario2: int, session: Session
     if not son_amigos(session, id_usuario, id_usuario2):
         raise HTTPException(status_code=404, detail="No sois amigos")
     
-    mensajes = session.exec(
-        select(Mensajes)
+    mensajes_username = session.exec(
+        select(Mensajes, Usuarios.username)
+        .join(Usuarios, Mensajes.id_usuario_emisor == Usuarios.id_usuario)
         .where(
             or_(
                 and_(Mensajes.id_usuario_emisor == id_usuario, Mensajes.id_usuario_receptor == id_usuario2),
@@ -543,28 +590,31 @@ async def get_mensajes_amigo(id_usuario: int, id_usuario2: int, session: Session
         .order_by(Mensajes.fecha.asc())  # Más antiguos primero
     ).all()
     
-    return mensajes
+    return [
+        {**mensaje.model_dump(), "username": username}
+        for mensaje, username in mensajes_username
+    ]
 
 
-# Crear mensaje amigo
-@app.post("/usuarios/{id_usuario}/amigos/{id_usuario2}")
-async def enviar_mensaje_amigo(mensaje: MensajeAmigoCreate, id_usuario: int, id_usuario2: int, session: Session = Depends(get_session)):
+# # Crear mensaje amigo
+# @app.put("/usuarios/{id_usuario}/amigos/{id_usuario2}")
+# async def enviar_mensaje_amigo(mensaje: MensajeAmigoCreate, id_usuario: int, id_usuario2: int, session: Session = Depends(get_session)):
     
-    if not await son_amigos(session, id_usuario, id_usuario2):
-        raise HTTPException(status_code=403, detail = "No sois amigos")
-    else:
-        nuevo_mensaje_amigo: Mensajes = Mensajes(
-            contenido = mensaje.contenido,
-            id_usuario_emisor = id_usuario,
-            fecha = datetime.now(UTC),
-            id_usuario_receptor = id_usuario2
-        )
+#     if not await son_amigos(session, id_usuario, id_usuario2):
+#         raise HTTPException(status_code=403, detail = "No sois amigos")
+#     else:
+#         nuevo_mensaje_amigo: Mensajes = Mensajes(
+#             contenido = mensaje.contenido,
+#             id_usuario_emisor = id_usuario,
+#             fecha = datetime.datetime.now(UTC),
+#             id_usuario_receptor = id_usuario2
+#         )
 
-        session.add(nuevo_mensaje_amigo)
-        session.commit()
-        session.refresh(nuevo_mensaje_amigo)
+#         session.add(nuevo_mensaje_amigo)
+#         session.commit()
+#         session.refresh(nuevo_mensaje_amigo)
 
-        return nuevo_mensaje_amigo
+#         return nuevo_mensaje_amigo
         
 # Eliminar mensaje amigo
 @app.delete("/usuarios/{id_usuario}/amigos/{id_usuario2}/mensajes/{id_mensaje}")
@@ -687,14 +737,13 @@ class ConnectionManager:
             if not self.salas[id_sala]:
                 del self.salas[id_sala]
 
-    async def broadcast (self, mensaje: str, id_sala: str, exclude_id_usuario: int | None = None):
+    async def broadcast (self, mensaje: str, id_sala: str):
         if id_sala in self.salas:
             for uid, ws in list(self.salas[id_sala].items()):
-                if exclude_id_usuario is None or uid != exclude_id_usuario:                    
-                    try:
-                        await ws.send_text(mensaje)
-                    except:
-                        del self.salas[id_sala][uid]
+                try:
+                    await ws.send_text(mensaje)
+                except:
+                    del self.salas[id_sala][uid]
 
 manager = ConnectionManager()
 
@@ -713,25 +762,64 @@ async def websocket_sala(websocket: WebSocket, id_usuario: int, id_canal: int, i
             while True:
                 data = await websocket.receive_text()
                 # await manager.send_personal_message(data, websocket)
-                await manager.broadcast(data, id_sala_str, id_usuario)
+                await manager.broadcast(data, id_sala_str)
         except WebSocketDisconnect:
             manager.disconnect(id_sala_str, id_usuario)
             # await manager.broadcast(f"Client #{id_usuario} left the chat")            
     else:
         await websocket.close(code=403)
 
-# dm
-@app.websocket("/ws/usuarios/{id_usuario}/amigos/{id_usuario2}")
-async def websocket_dm(websocket: WebSocket, id_usuario: int, id_usuario2: int):
 
-    id_sala_dm = f"{min(id_usuario,id_usuario2)}_{max(id_usuario, id_usuario2)}"
-    await manager.connect(websocket, id_sala_dm, id_usuario)
+# Mensajes amigo
+# @app.websocket("/ws/usuarios/{id_usuario}/amigos/{id_usuario2}")
+# async def websocket_dm(websocket: WebSocket, id_usuario: int, id_usuario2: int):
+
+#     id_sala_dm = f"{min(id_usuario,id_usuario2)}_{max(id_usuario, id_usuario2)}"
+#     await manager.connect(websocket, id_sala_dm, id_usuario)
+
+#     try:
+#         while True:
+#             data = await websocket.receive_text()
+#             # await manager.send_personal_message(data, websocket)
+#             await manager.broadcast(data, id_sala_dm, id_usuario)
+#     except WebSocketDisconnect:
+#         manager.disconnect(id_sala_dm, id_usuario)
+#         # await manager.broadcast(f"Client #{id_usuario} left the chat")  
+
+# Mensajes amigo
+@app.websocket("/ws/usuarios/{id_usuario}/amigos/{id_usuario2}")
+async def websocket_dm(websocket: WebSocket, id_usuario: int, id_usuario2: int, session: Session = Depends(get_session)):
+
+    id_sala_amigo = f"{min(id_usuario,id_usuario2)}_{max(id_usuario, id_usuario2)}"
+    await manager.connect(websocket, id_sala_amigo, id_usuario)
 
     try:
         while True:
             data = await websocket.receive_text()
-            # await manager.send_personal_message(data, websocket)
-            await manager.broadcast(data, id_sala_dm, id_usuario)
+            mensaje_data = json.loads(data)
+            
+            # guardar en BD
+            nuevo_mensaje = Mensajes(
+                contenido=mensaje_data["contenido"],
+                id_usuario_emisor=id_usuario,
+                id_usuario_receptor=id_usuario2,
+                fecha=datetime.datetime.now(UTC)
+            )
+            session.add(nuevo_mensaje)
+            session.commit()
+            session.refresh(nuevo_mensaje)
+
+            # obtener username del emisor
+            usuario = session.get(Usuarios, id_usuario)
+
+            # broadcast a todos con el mensaje completo
+            await manager.broadcast(json.dumps({
+                "id_mensaje": nuevo_mensaje.id_mensaje,
+                "contenido": nuevo_mensaje.contenido,
+                "id_usuario_emisor": id_usuario,
+                "username": usuario.username,
+                "fecha": nuevo_mensaje.fecha.isoformat()
+            }), id_sala_amigo)
+
     except WebSocketDisconnect:
-        manager.disconnect(id_sala_dm, id_usuario)
-        # await manager.broadcast(f"Client #{id_usuario} left the chat")            
+        manager.disconnect(id_sala_amigo, id_usuario)

@@ -29,7 +29,8 @@ function irAIniciarSesion() {
 <style>
     #fondo{
         height: 100vh;
-        background-image: url("https://starwalk.space/gallery/images/what-is-space/1140x641.jpg");
+        /* background-image: url("https://starwalk.space/gallery/images/what-is-space/1140x641.jpg"); */
+        background-image: url("https://img1.wallspic.com/crops/9/0/1/8/4/148109/148109-objeto_astronomico-tierra-naturaleza-ambiente-universo-4096x3040.jpg");
         background-size: cover;
         display: flex;
         align-items: center;

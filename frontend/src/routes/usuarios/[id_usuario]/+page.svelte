@@ -1,4 +1,7 @@
 <script lang="ts">
+import { goto, invalidateAll } from '$app/navigation';
+import DialogoBuscar from '../../../components/DialogoBuscar.svelte';
+
     type Canal = {
         id_canal: number;
         nombre: string;
@@ -12,24 +15,27 @@
         email: string;
         fecha_amistad: string;
     }
-    let { data } = $props();
-    let canales: Canal[] = $derived(data.canales ?? []); // ?? es un operador nullish coalescing, si el de la izq es null devuelve el de la derecha
-    let amigos: Amigo[] = $derived(data.amigos ?? []);
-    let id_usuario = $derived(data.id_usuario); //derived innecesario, el id_usuario no cambiará
 
-// TODO agregar boton para añadir amigos y añadir canales etc
-    function irCanal(id_canal : number){
-        window.location.href = `/usuarios/${id_usuario}/canales/${id_canal}`;
+    let { data } = $props();
+    let canales: Canal[] = $derived(data.canales ?? []);
+    let amigos: Amigo[] = $derived(data.amigos ?? []);
+    let id_usuario = $derived(Number(data.id_usuario));
+
+    let dialogoCanal = $state<any>(null);
+    let dialogoAmigo = $state<any>(null);
+
+    function irCanal(id_canal: number) {
+        goto(`/usuarios/${id_usuario}/canales/${id_canal}`);
     }
-    function irAmigo(id_usuario2: number){
-        window.location.href = `/usuarios/${id_usuario}/amigos/${id_usuario2}`;
+    
+    function irAmigo(id_usuario2: number) {
+        goto(`/usuarios/${id_usuario}/amigos/${id_usuario2}`);
     }
 
 </script>
 
 
-<!-- TODO crear un canal, añadir canales (ver lista de canales disponibles a seguir), añadir amigo (introducir username y bbdd busca) -->
-<!-- TODO añadir cargando para que no se renderice antes de tiempo el no tienes amigos/canales -->
+<!-- TODO crear un canal -->
 <main>
     <div id="texto"> 
         <h1>Bienvenido usuario</h1>
@@ -41,30 +47,38 @@
         
         <!-- CANALES -->
         <div class="columna">
-            <h2>Canales</h2>
+            <div class="headerColumna">
+                <h2>Canales</h2>
+                <button class="botonAñadir" onclick={() => dialogoCanal?.abrir()}>+</button>
+            </div>
             {#if canales.length === 0}
                 <div class= "item">No sigues ningún canal</div>
             {:else}
+                <div class= "scroll">
                 {#each canales as canal}
                     <div class="item">
                         <button onclick={() => irCanal(canal.id_canal)}>{canal.nombre}</button>
                     </div>
                 {/each}
-
+                </div>
             {/if}            
                 <div class= "finColumna"></div>
         </div>
 
         <!-- AMIGOS -->
         <div class="columna">
-            <h2>Amigos</h2>
+            <div class="headerColumna">
+                <h2>Amigos</h2>
+                <button class="botonAñadir" onclick={() => dialogoAmigo?.abrir()}>+</button>
+            </div>
             {#if amigos.length != 0}
+                <div class="scroll">
                 {#each amigos as amigo}
-                    <!-- <div class="item">{amigo.username}</div> -->
                     <div class="item">
                         <button onclick={() => {irAmigo(amigo.id_amigo)}}>{amigo.username}</button>
                     </div>
                 {/each}
+                </div>
             {:else}
                 <div class= "item">No sigues a ningún amigo</div>
             {/if}            
@@ -73,14 +87,49 @@
     </div>
 </main>
 
+<DialogoBuscar
+    bind:ref={dialogoCanal}
+    titulo="Añadir canal"
+    endpoint="http://localhost:8001/canales"
+    labelNombre="nombre"
+    onclose={invalidateAll}
+    onAnhadir={async (item) => {
+        await fetch(`http://localhost:8001/usuarios/${id_usuario}/canales/${item.id_canal}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id_canal: item.id_canal })
+        });
+    }}
+/>
+<DialogoBuscar
+    bind:ref={dialogoAmigo}
+    titulo="Añadir amigo"
+    endpoint="http://localhost:8001/usuarios"
+    labelNombre="username"
+    onclose={invalidateAll}
+    onAnhadir={async (item) => {
+        await fetch(`http://localhost:8001/usuarios/${id_usuario}/amigos/${item.id_usuario}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id_usuario: item.id_usuario })
+        });
+    }}
+/>
+
 <style>
-    h2{
+    h2 {
         font-size: 24px;
         padding: 4px;
+        flex: 1;
+        text-align: center;
+        color: var(--text-primary);
     }
+    
     #texto {
-        margin-top: 120px
+        margin-top: 120px;
+        color: var(--text-primary);
     }
+    
     .columnas {
         margin: auto;
         margin-top: 80px;
@@ -88,26 +137,95 @@
         display: flex;
         gap: 2rem;
         min-height: 300px;
+        max-height: 300px;
     }
+    
     .columna {
         flex: 1;
-        background-color: #5865f2;
+        background-color: var(--bg-aside);
         border-radius: 12px;
     }
+    
+    .scroll {
+        max-height: 238px;
+        overflow-y: auto;
+        flex: 1;
+        flex-direction: column;
+        gap: 6px;
+        padding: 0 1%;
+    } 
+    
     .item {
-        background-color: whitesmoke;
-        color: black;
+        background-color: var(--bg-input);
+        color: var(--text-primary);
+        margin-top: 2px;
+        margin-bottom: 2px;
+        border-radius: 10px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
     }
-    button{
+    
+    button {
         cursor: pointer;
         margin-left: auto;
         margin-right: auto;
-        padding:1px 12px;
+        padding: 1px 12px;
+        width: 120px;
+        font-size: 18px;
+        background: var(--bg-input);
+        color: var(--text-primary);
+        border: 1px solid var(--border-menu);
+        border-radius: 8px;
     }
+    
     .finColumna {
         flex: 1;
-        background-color: #5865f2;
+        background-color: var(--bg-aside);
         border-radius: 12px;
         min-height: 22px;
     }
+    
+    .botonAñadir {
+        position: absolute;
+        right: 0.5rem;
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        border: none;
+        background: var(--btn-primary);
+        color: var(--text-primary);
+        font-size: 1.5rem;
+        display: flex;
+        justify-content: center;
+        line-height: 1;
+    }
+    
+    .headerColumna {
+        display: flex;
+        align-items: center;
+        position: relative;
+    }
+
+    /* Scrollbar */
+    .scroll::-webkit-scrollbar {
+        width: 6px;
+    }
+    .scroll::-webkit-scrollbar-track {
+        background: transparent;
+    }
+    .scroll::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.3);
+        border-radius: 10px;
+    }
+    .scroll::-webkit-scrollbar-thumb:hover {
+        background: rgba(255, 255, 255, 0.5);
+    }
+    .scroll {
+        scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
+        scrollbar-width: thin;
+    }
+    
+
 </style>

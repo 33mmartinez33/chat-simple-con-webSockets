@@ -1,0 +1,67 @@
+<script lang="ts">
+    interface  Props {
+        id_usuario: number;
+        onclose: () => void;
+        ref?: { abrir: () => void };
+    }
+
+    let { id_usuario, onclose, ref = $bindable() }: Props = $props();
+
+    let dialog = $state<HTMLDialogElement | null>(null);
+    let nombre = $state("");
+    let contenido_principal = $state("");
+
+    $effect(() => {
+        ref = {
+            abrir: () => {
+                nombre = '';
+                contenido_principal = '';
+                dialog?.showModal();
+            }
+        };
+    });
+
+    function cerrar() {
+        dialog?.close();
+        onclose();
+    }
+
+    async function crear() {
+        await fetch(`/usuarios/${id_usuario}/canales`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ nombre, contenido_principal })
+        });
+        cerrar();
+}
+</script>
+
+<dialog bind:this={dialog}>
+<div class="modal-header">
+        <h3>Crear sala</h3>
+        <button class="btn-cerrar" onclick={cerrar}>✕</button>
+    </div>
+
+    <input type="text" placeholder="Nombre del canal" bind:value={nombre} />
+
+    <textarea id="input-contenido" placeholder="Contenido principal (post) del canal" bind:value={nombre}></textarea>
+    <button class="btn-crear" onclick={crear}>Crear</button>
+</dialog>
+
+<style>
+    .btn-crear {
+        color: var(--text-primary);
+        margin: auto;
+        margin-top: 16px;
+        border-radius: 20px;
+        border: 1px solid var(--border-accent);
+        padding: 6px 24px;
+        display: block;
+        background: none;
+        cursor: pointer;
+    }
+    #input-contenido{
+        height: 180px;
+    }
+
+</style>

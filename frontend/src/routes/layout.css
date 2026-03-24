@@ -1,43 +1,214 @@
 @import 'tailwindcss';
 @plugin '@tailwindcss/forms';
 
+/* :root {
+    --bg-body: #0a0f2e;
+    --bg-aside: #1a1f4e;
+    --bg-nav: #0f4a7a;
+    --bg-input: #1a1f4e;
+    --btn-primary: #00d4ff;
+    --text-primary: #e0e7ff;
+    --border-menu: #4b5e7a;
+    --space-bg: url("https://starwalk.space/gallery/images/what-is-space/1140x641.jpg");
+    --text-muted: #94a3b8;
+    --border-light: 1px solid #4b5e7a;
+    --color1: #000;
+    --color2: #010d0d;
+    --color3: #021818;
+    --color4: #042828;
+    --color5: #00bcd4;
+    --color6: #80ffdb;
+    --color7: #e0fffa;
+} */
+:root {
+  /* Fondos */
+  --bg-primary:    #000000;   /* body, fondo general */
+  --bg-secondary:  #010d0d;   /* nav, aside */
+  --bg-tertiary:   #021818;   /* cards, inputs */
+  --bg-elevated:   #042828;   /* hover states, bordes */
 
+  /* Acentos */
+  --accent-primary:   #00bcd4;   /* botones, activos, links */
+  --accent-secondary: #80ffdb;   /* badges, tags, destellos */
 
-body{
-    text-align: center;
-    background-color: #36393f;
-    color: white;
-    font-family: system-ui, -apple-system, sans-serif;
+  /* Texto */
+  --text-primary:   #e0fffa;   /* títulos, texto principal */
+  --text-secondary: #449988;   /* labels, texto muted */
+  --text-muted:     #1a5555;   /* placeholders, items inactivos */
+
+  /* Bordes */
+  --border-soft:   #00bcd422;  /* bordes muy sutiles */
+  --border-normal: #042828;    /* bordes estándar */
+  --border-accent: #00bcd455;  /* bordes con color */
+
+      --color1: #000;
+    --color2: #010d0d;
+    --color3: #021818;
+    --color4: #042828;
+    --color5: #00bcd4;
+    --color6: #80ffdb;
+    --color7: #e0fffa;
 }
 
-h1{
-    font-size: 60px;
-    text-align: center;
-}
-input{
-    border-radius: 8px;
-    width: 280px;
-    margin-bottom: 20px;
-    background-color: #1d1e29;
-}
-label{
-    display: block;
-    font-size: 18px;
-    text-align: left;
-    color: white;
+body {
+  text-align: center;
+  background-color: var(--bg-tertiary);
+  color: var(--text-primary);
+  font-family: system-ui, -apple-system, sans-serif;
 }
 
-.botonFormulario{
-    display: block;
-    width: 280px;
-    padding: 12px 24px;     
-    /* border: 2px solid #5865f2; */
-    background: #5865f2;
-    color: white;
-    border-radius: 6px;
-    font-size: 18px;
-    cursor: pointer;
-    margin-left: auto;
-    margin-right: auto;
-    margin-top: 30px;
+h1 {
+  font-size: 60px;
+  text-align: center;
+}
+
+h3 {
+  color: var(--text-primary);
+  margin: 0;
+}
+
+label {
+  display: block;
+  font-size: 18px;
+  text-align: left;
+  color: var(--text-primary);
+}
+
+input {
+  border-radius: 8px;
+  width: 280px;
+  margin-bottom: 20px;
+  background-color: var(--bg-tertiary);
+  color: var(--text-primary);
+  border: 1px solid var(--border-normal);
+}
+
+textarea {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid var(--border-accent);
+  border-radius: 8px;
+  font-size: 1rem;
+  box-sizing: border-box;
+  margin-bottom: 1rem;
+  background-color: var(--bg-tertiary);
+  color: var(--text-primary);
+}
+
+/* ── Botones ───────────────────────── */
+.botonFormulario {
+  display: block;
+  width: 280px;
+  padding: 12px 24px;
+  background: var(--accent-primary);
+  color: var(--bg-primary);
+  border: none;
+  border-radius: 6px;
+  font-size: 18px;
+  cursor: pointer;
+  margin: 30px auto 0;
+}
+
+.btn-menu {
+  background: none;
+  border: 1px solid var(--border-accent);
+  cursor: pointer;
+  padding: 0;
+  border-radius: 12px;
+}
+
+.btn-menu img {
+  width: 60px;
+  height: 60px;
+  object-fit: contain;
+  border-radius: 12px;
+}
+
+.btn-cerrar {
+  position: absolute;
+  right: 0.5rem;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: none;
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+  font-size: 1.5rem;
+  display: flex;
+  justify-content: center;
+  line-height: 1;
+  cursor: pointer;
+}
+
+/* ── Nav / Aside ───────────────────── */
+nav {
+  position: fixed;
+  width: 250px;
+  height: 80px;
+  background: var(--bg-secondary);
+  border-bottom: 0.5px solid var(--border-normal);
+  display: flex;
+  align-items: center;
+  padding: 0 1rem;
+  z-index: 101;
+}
+
+/* ── Dialog / Modal ────────────────── */
+dialog {
+  border: 1px solid var(--border-accent);
+  border-radius: 12px;
+  padding: 1.5rem;
+  width: 400px;
+  max-width: 90vw;
+  margin: auto;
+  background-color: var(--bg-secondary);
+}
+
+dialog::backdrop {
+  background: rgba(0, 0, 0, 0.6);
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+dialog input {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid var(--border-accent);
+  border-radius: 8px;
+  font-size: 1rem;
+  box-sizing: border-box;
+  margin-bottom: 1rem;
+  background-color: var(--bg-tertiary);
+  color: var(--text-primary);
+}
+
+/* ── Resultados ────────────────────── */
+.resultados {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  max-height: 250px;
+  overflow-y: auto;
+}
+
+.resultado-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem 0.75rem;
+  border-radius: 8px;
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+  border: 0.5px solid var(--border-normal);
+}
+
+.hint {
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.9rem;
 }
