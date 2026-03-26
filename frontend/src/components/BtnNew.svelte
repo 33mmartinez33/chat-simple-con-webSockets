@@ -9,11 +9,11 @@
     
 </script>
 
-<button {onclick} {title} class="btn-add">New</button>
+<button {onclick} {title} class="btn-new">+</button>
 <style>
-        .btn-add {
-        width: 48px;
-        height: 34px;
+    .btn-new {
+        width: 28px;
+        height: 28px;
         border-radius: 6px;
         border: 0.5px solid var(--border-accent);
         background: var(--bg-primary);
@@ -21,14 +21,14 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        padding-bottom: 2px;
+        padding-bottom: 6px;
         cursor: pointer;
         flex-shrink: 0;
-        font-size: 0.8rem;
+        font-size: 1.5rem;
     }
-    .btn-add:hover {
-    background: color-mix(in srgb, var(--bg-primary) 90%, var(--accent-primary));
-    transform: scale(1.05);
-    transition: all 0.1s;
-}
+    .btn-new:hover {
+        background: color-mix(in srgb, var(--bg-primary) 90%, var(--accent-primary));
+        transform: scale(1.05);
+        transition: all 0.1s;
+    }
 </style>

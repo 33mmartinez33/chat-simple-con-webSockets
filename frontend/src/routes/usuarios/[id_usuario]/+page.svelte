@@ -121,8 +121,9 @@ import DialogoBuscar from '../../../components/DialogoBuscar.svelte';
         font-size: 24px;
         padding: 4px;
         flex: 1;
-        text-align: center;
+        text-align: left;
         color: var(--text-primary);
+        margin-left: 10px;
     }
     
     #texto {
@@ -142,8 +143,10 @@ import DialogoBuscar from '../../../components/DialogoBuscar.svelte';
     
     .columna {
         flex: 1;
-        background-color: var(--bg-aside);
+        background-color: var(--bg-elevated);
         border-radius: 12px;
+        border: solid var(--border-accent) 1px;
+        text-align: left;
     }
     
     .scroll {
@@ -156,14 +159,14 @@ import DialogoBuscar from '../../../components/DialogoBuscar.svelte';
     } 
     
     .item {
-        background-color: var(--bg-input);
+        background-color: var(--bg-tertiary);
         color: var(--text-primary);
         margin-top: 2px;
         margin-bottom: 2px;
         border-radius: 10px;
         height: 40px;
         display: flex;
-        align-items: center;
+        /* align-items: left; */
         justify-content: center;
     }
     
@@ -172,12 +175,13 @@ import DialogoBuscar from '../../../components/DialogoBuscar.svelte';
         margin-left: auto;
         margin-right: auto;
         padding: 1px 12px;
-        width: 120px;
+        width: 180px;
         font-size: 18px;
         background: var(--bg-input);
         color: var(--text-primary);
         border: 1px solid var(--border-menu);
         border-radius: 8px;
+        text-align: left;
     }
     
     .finColumna {
@@ -226,6 +230,4 @@ import DialogoBuscar from '../../../components/DialogoBuscar.svelte';
         scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
         scrollbar-width: thin;
     }
-    
-
 </style>

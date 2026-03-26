@@ -8,13 +8,13 @@
     let { id_usuario, onclose, ref = $bindable() }: Props = $props();
 
     let dialog = $state<HTMLDialogElement | null>(null);
-    let nombre = $state("");
+    let nombre_canal = $state("");
     let contenido_principal = $state("");
 
     $effect(() => {
         ref = {
             abrir: () => {
-                nombre = '';
+                nombre_canal = '';
                 contenido_principal = '';
                 dialog?.showModal();
             }
@@ -27,10 +27,10 @@
     }
 
     async function crear() {
-        await fetch(`/usuarios/${id_usuario}/canales`, {
+        await fetch(`http://localhost:8001/usuarios/${id_usuario}/canales`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ nombre, contenido_principal })
+            body: JSON.stringify({ nombre_canal, contenido_principal })
         });
         cerrar();
 }
@@ -38,13 +38,13 @@
 
 <dialog bind:this={dialog}>
 <div class="modal-header">
-        <h3>Crear sala</h3>
+        <h3>Crear canal</h3>
         <button class="btn-cerrar" onclick={cerrar}>✕</button>
     </div>
 
-    <input type="text" placeholder="Nombre del canal" bind:value={nombre} />
+    <input type="text" placeholder="Nombre del canal" maxlength="14" bind:value={nombre_canal} />
 
-    <textarea id="input-contenido" placeholder="Contenido principal (post) del canal" bind:value={nombre}></textarea>
+    <textarea id="input-contenido" placeholder="Contenido principal (post) del canal" bind:value={contenido_principal}></textarea>
     <button class="btn-crear" onclick={crear}>Crear</button>
 </dialog>
 

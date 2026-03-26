@@ -10,6 +10,9 @@ function irAIniciarSesion() {
 }
 </script>
 
+<svelte:head>
+  <link rel="preload" href="/assets/img/fondo_principal (1).webp" as="image" fetchpriority="high">
+</svelte:head>
 
 <main>
     <div id= "fondo">
@@ -29,8 +32,7 @@ function irAIniciarSesion() {
 <style>
     #fondo{
         height: 100vh;
-        /* background-image: url("https://starwalk.space/gallery/images/what-is-space/1140x641.jpg"); */
-        background-image: url("https://img1.wallspic.com/crops/9/0/1/8/4/148109/148109-objeto_astronomico-tierra-naturaleza-ambiente-universo-4096x3040.jpg");
+        background-image: url("assets/img/fondo_principal (1).webp");
         background-size: cover;
         display: flex;
         align-items: center;
@@ -56,11 +58,16 @@ function irAIniciarSesion() {
         margin: 0 5px;
         margin-top: 20px;
         padding: 12px 24px;     
-        border: 2px solid #5865f2;
-        background: #5865f2;
-        color: white;
+        border: 2px solid var(--border-accent);
+        background: var(--bg-secondary);
+        color: var(--text-primary);
         border-radius: 6px;
         font-size: 18px;
         cursor: pointer;
+    }
+    button:hover {
+        background: color-mix(in srgb, var(--bg-primary) 90%, var(--accent-primary));
+        transform: scale(1.05);
+        transition: all 0.1s;
     }
 </style>

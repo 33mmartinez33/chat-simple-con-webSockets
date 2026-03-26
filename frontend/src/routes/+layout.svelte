@@ -11,15 +11,17 @@
 	let id_usuario = $derived(page.params.id_usuario);
 </script>
 
-<svelte:head><link rel="icon" href={favicon} /></svelte:head>
+<svelte:head>
+    <link rel="icon" href={favicon} />
+    <link rel="preload" href="assets/img/fondo_principal.jpg" as="image" fetchpriority= "high">
+</svelte:head>
 
 {#if mostrarMenu}
     <nav>
         <button class="btn-menu" onclick={() => {
-		console.log('id_usuario:', id_usuario);
 		goto(`/usuarios/${id_usuario}`);
 		}}>
-            <img src="/assets/img/logo_pequeno.JPG" alt="Nexus" />
+            <img src="/assets/img/logo-nexus-verde.JPG" alt="Nexus" />
         </button>
     </nav>
 {/if}

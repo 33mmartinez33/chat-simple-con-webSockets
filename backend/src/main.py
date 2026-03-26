@@ -73,7 +73,7 @@ class SalaUpdate(BaseModel):
 
 
 # comprubea si el usuario es admin en el canal que se pasa por parametro
-async def es_admin(session: Session, id_usuario: int, id_canal: int):
+def es_admin(session: Session, id_usuario: int, id_canal: int):
     return bool(session.exec(
         select(RolUsuarioCanal).where(
             RolUsuarioCanal.id_usuario == id_usuario,
@@ -83,7 +83,7 @@ async def es_admin(session: Session, id_usuario: int, id_canal: int):
     ).first())
 
 # comprubea si el rol es admin o participante
-async def es_participante_o_admin(session: Session, id_usuario: int, id_canal: int):
+def es_participante_o_admin(session: Session, id_usuario: int, id_canal: int):
     return bool(session.exec(
         select(RolUsuarioCanal).where(
             RolUsuarioCanal.id_usuario == id_usuario,
@@ -96,7 +96,7 @@ async def es_participante_o_admin(session: Session, id_usuario: int, id_canal: i
     ).first())
 
 # Comprueba si los 2 usuarios que se le pasa como parametro son amigos
-async def son_amigos(session: Session, id_usuario1: int, id_usuario2: int):
+def son_amigos(session: Session, id_usuario1: int, id_usuario2: int):
     return bool(session.exec(
         select(Amigos).where(
             Amigos.id_usuario1 == id_usuario1,
@@ -346,6 +346,34 @@ async def eliminar_canal(id_usuario:int, id_canal:int, session: Session = Depend
 
 # SALAS
 
+# Ver sala
+@app.get("/usuarios/{id_usuario}/canales/{id_canal}/salas/{id_sala}")
+async def get_info_sala(id_usuario: int, id_canal: int, id_sala: int, session: Session = Depends(get_session)):
+    sala = session.exec(
+        select(Salas).distinct()
+        .join(  # distinct() evita duplicados
+            Canales,
+            Salas.id_canal == Canales.id_canal)
+        .join(
+            RolUsuarioCanal,
+            Canales.id_canal == RolUsuarioCanal.id_canal,
+        ).where(
+            Canales.id_canal == id_canal,
+            Salas.id_sala == id_sala,           
+            RolUsuarioCanal.id_usuario == id_usuario,
+            RolUsuarioCanal.rol.in_([
+                RolAdministradorParticipanteT.ADMINISTRADOR,
+                RolAdministradorParticipanteT.PARTICIPANTE
+            ])
+        )
+    ).first()
+
+    if not sala:
+        raise HTTPException(status_code=404, detail="Sala no encontrada")
+    
+    return sala
+
+
 # Ver salas
 @app.get("/usuarios/{id_usuario}/canales/{id_canal}/salas")
 async def get_salas_canal(id_usuario: int, id_canal: int, session: Session = Depends(get_session)):
@@ -498,7 +526,7 @@ async def eliminar_amigo(id_usuario: int, id_usuario2: int, session: Session = D
 # MENSAJES
 
 # Ver mensajes sala
-@app.get("/usuarios/{id_usuario}/canales/{id_canal}/salas/{id_sala}")
+@app.get("/usuarios/{id_usuario}/canales/{id_canal}/salas/{id_sala}/mensajes")
 async def get_mensajes_sala(id_usuario: int, id_canal: int, id_sala: int, session: Session = Depends(get_session)):
     sala = session.get(Salas, id_sala)
     
@@ -507,10 +535,16 @@ async def get_mensajes_sala(id_usuario: int, id_canal: int, id_sala: int, sessio
     elif not es_participante_o_admin(session, id_usuario, id_canal):
         raise HTTPException(status_code=403, detail="Permisos insuficientes") 
     else:
-        mensajes = session.exec(Mensajes).where(
-            Mensajes.id_sala == id_sala
-        ).order_by(Mensajes.fecha.desc()).all()
-        return mensajes
+        mensajes = session.exec(
+            select(Mensajes, Usuarios.username)
+            .join(Usuarios, Mensajes.id_usuario_emisor == Usuarios.id_usuario)
+            .where(Mensajes.id_sala == id_sala)
+            .order_by(Mensajes.fecha.asc())
+        ).all()
+        return [
+            {**mensaje.model_dump(), "username": username}
+            for mensaje, username in mensajes
+        ]
 
 
 # Crear mensaje en sala
@@ -594,27 +628,6 @@ async def get_mensajes_amigo(id_usuario: int, id_usuario2: int, session: Session
         {**mensaje.model_dump(), "username": username}
         for mensaje, username in mensajes_username
     ]
-
-
-# # Crear mensaje amigo
-# @app.put("/usuarios/{id_usuario}/amigos/{id_usuario2}")
-# async def enviar_mensaje_amigo(mensaje: MensajeAmigoCreate, id_usuario: int, id_usuario2: int, session: Session = Depends(get_session)):
-    
-#     if not await son_amigos(session, id_usuario, id_usuario2):
-#         raise HTTPException(status_code=403, detail = "No sois amigos")
-#     else:
-#         nuevo_mensaje_amigo: Mensajes = Mensajes(
-#             contenido = mensaje.contenido,
-#             id_usuario_emisor = id_usuario,
-#             fecha = datetime.datetime.now(UTC),
-#             id_usuario_receptor = id_usuario2
-#         )
-
-#         session.add(nuevo_mensaje_amigo)
-#         session.commit()
-#         session.refresh(nuevo_mensaje_amigo)
-
-#         return nuevo_mensaje_amigo
         
 # Eliminar mensaje amigo
 @app.delete("/usuarios/{id_usuario}/amigos/{id_usuario2}/mensajes/{id_mensaje}")
@@ -622,7 +635,7 @@ async def eliminar_mensaje_amigo(id_mensaje: int, id_usuario: int, id_usuario2: 
     
     mensaje_db = session.get(Mensajes, id_mensaje)
 
-    if not await son_amigos(session, id_usuario, id_usuario2):
+    if not son_amigos(session, id_usuario, id_usuario2):
         raise HTTPException(status_code=403, detail = "No sois amigos")
     elif not mensaje_db:
         raise HTTPException(status_code=404, detail = "No existe el mensaje")
@@ -633,91 +646,6 @@ async def eliminar_mensaje_amigo(id_mensaje: int, id_usuario: int, id_usuario2: 
         session.commit()
         return {"message": "Mensaje eliminado exitosamente"}
 
-
-
-# # WEBSOCKETS de la DOC
-
-# from fastapi import FastAPI, WebSocket, WebSocketDisconnect
-# from fastapi.responses import HTMLResponse
-
-# # app = FastAPI()
-
-# html = """
-# <!DOCTYPE html>
-# <html>
-#     <head>
-#         <title>Chat</title>
-#     </head>
-#     <body>
-#         <h1>WebSocket Chat</h1>
-#         <h2>Your ID: <span id="ws-id"></span></h2>
-#         <form action="" onsubmit="sendMessage(event)">
-#             <input type="text" id="messageText" autocomplete="off"/>
-#             <button>Send</button>
-#         </form>
-#         <ul id='messages'>
-#         </ul>
-#         <script>
-#             var id_usuario = Date.now()
-#             document.querySelector("#ws-id").textContent = id_usuario;
-#             var ws = new WebSocket(`ws://localhost:8001/ws/${id_usuario}`);
-#             ws.onmessage = function(event) {
-#                 var messages = document.getElementById('messages')
-#                 var message = document.createElement('li')
-#                 var content = document.createTextNode(event.data)
-#                 message.appendChild(content)
-#                 messages.appendChild(message)
-#             };
-#             function sendMessage(event) {
-#                 var input = document.getElementById("messageText")
-#                 ws.send(input.value)
-#                 input.value = ''
-#                 event.preventDefault()
-#             }
-#         </script>
-#     </body>
-# </html>
-# """
-
-
-# class ConnectionManager:
-#     def __init__(self):
-#         self.active_connections: list[WebSocket] = []
-
-#     async def connect(self, websocket: WebSocket):
-#         await websocket.accept()
-#         self.active_connections.append(websocket)
-
-#     def disconnect(self, websocket: WebSocket):
-#         self.active_connections.remove(websocket)
-
-#     async def send_personal_message(self, message: str, websocket: WebSocket):
-#         await websocket.send_text(message)
-
-#     async def broadcast(self, message: str):
-#         for connection in self.active_connections:
-#             await connection.send_text(message)
-
-
-# manager = ConnectionManager()
-
-
-# @app.get("/")
-# async def get():
-#     return HTMLResponse(html)
-
-
-# @app.websocket("/ws/{id_usuario}")
-# async def websocket_endpoint(websocket: WebSocket, id_usuario: int):
-#     await manager.connect(websocket)
-#     try:
-#         while True:
-#             data = await websocket.receive_text()
-#             await manager.send_personal_message(f"You wrote: {data}", websocket)
-#             await manager.broadcast(f"Client #{id_usuario} says: {data}")
-#     except WebSocketDisconnect:
-#         manager.disconnect(websocket)
-#         await manager.broadcast(f"Client #{id_usuario} left the chat")
 
 # WEBSOKCETS
 
@@ -750,41 +678,50 @@ manager = ConnectionManager()
 
 # endpoints con ws
 
-# sala
+# Mensajes sala
 @app.websocket("/ws/usuarios/{id_usuario}/canales/{id_canal}/salas/{id_sala}")
 async def websocket_sala(websocket: WebSocket, id_usuario: int, id_canal: int, id_sala: int, session: Session = Depends(get_session)):
     if es_participante_o_admin(session, id_usuario, id_canal):
 
-        id_sala_str = f"{id_canal}_{id_sala}"
-        await manager.connect(websocket, id_sala_str, id_usuario)
 
+        id_sala_str = f"{id_canal}_{id_sala}"
+
+        print("Es participante o admin y el id_sala_str es: ", id_sala_str)
+        await manager.connect(websocket, id_sala_str, id_usuario)
         try:
             while True:
                 data = await websocket.receive_text()
-                # await manager.send_personal_message(data, websocket)
-                await manager.broadcast(data, id_sala_str)
+                mensaje_data = json.loads(data)
+                
+                # guardar en BD
+                nuevo_mensaje = Mensajes(
+                    contenido=mensaje_data["contenido"],
+                    id_usuario_emisor=id_usuario,
+                    id_sala=id_sala,
+                    fecha=datetime.datetime.now(UTC)
+                )
+                session.add(nuevo_mensaje)
+                session.commit()
+                session.refresh(nuevo_mensaje)
+
+                # obtener username del emisor
+                usuario = session.get(Usuarios, id_usuario)
+
+                # broadcast a todos con el mensaje completo
+                await manager.broadcast(json.dumps({
+                    "id_mensaje": nuevo_mensaje.id_mensaje,
+                    "contenido": nuevo_mensaje.contenido,
+                    "id_usuario_emisor": id_usuario,
+                    "username": usuario.username,
+                    "fecha": nuevo_mensaje.fecha.isoformat()
+                }), id_sala_str)
+
         except WebSocketDisconnect:
             manager.disconnect(id_sala_str, id_usuario)
-            # await manager.broadcast(f"Client #{id_usuario} left the chat")            
+
     else:
         await websocket.close(code=403)
 
-
-# Mensajes amigo
-# @app.websocket("/ws/usuarios/{id_usuario}/amigos/{id_usuario2}")
-# async def websocket_dm(websocket: WebSocket, id_usuario: int, id_usuario2: int):
-
-#     id_sala_dm = f"{min(id_usuario,id_usuario2)}_{max(id_usuario, id_usuario2)}"
-#     await manager.connect(websocket, id_sala_dm, id_usuario)
-
-#     try:
-#         while True:
-#             data = await websocket.receive_text()
-#             # await manager.send_personal_message(data, websocket)
-#             await manager.broadcast(data, id_sala_dm, id_usuario)
-#     except WebSocketDisconnect:
-#         manager.disconnect(id_sala_dm, id_usuario)
-#         # await manager.broadcast(f"Client #{id_usuario} left the chat")  
 
 # Mensajes amigo
 @app.websocket("/ws/usuarios/{id_usuario}/amigos/{id_usuario2}")

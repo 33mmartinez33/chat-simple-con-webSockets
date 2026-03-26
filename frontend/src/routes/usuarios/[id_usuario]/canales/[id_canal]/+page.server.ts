@@ -7,6 +7,7 @@ export async function load({params}) {
         fetch(`http://localhost:8001/usuarios/${id_usuario}/canales/${id_canal}/salas`),
         fetch(`http://localhost:8001/usuarios/${id_usuario}/amigos`),
         fetch(`http://localhost:8001/usuarios/${id_usuario}/canales/${id_canal}`),
+
     ]);
 
     const infoUser = resInfoUser.ok ? await resInfoUser.json(): {};

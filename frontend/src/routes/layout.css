@@ -28,8 +28,9 @@
   --bg-elevated:   #042828;   /* hover states, bordes */
 
   /* Acentos */
-  --accent-primary:   #00bcd4;   /* botones, activos, links */
+  --accent-primary:   #131313;   /* botones, activos, links */
   --accent-secondary: #80ffdb;   /* badges, tags, destellos */
+  --accent-tertiary: #0eb6b6;   /* tags principales*/
 
   /* Texto */
   --text-primary:   #e0fffa;   /* títulos, texto principal */
@@ -41,7 +42,7 @@
   --border-normal: #042828;    /* bordes estándar */
   --border-accent: #00bcd455;  /* bordes con color */
 
-      --color1: #000;
+    --color1: #000;
     --color2: #010d0d;
     --color3: #021818;
     --color4: #042828;
@@ -100,8 +101,9 @@ textarea {
   display: block;
   width: 280px;
   padding: 12px 24px;
-  background: var(--accent-primary);
-  color: var(--bg-primary);
+  border: 2px solid var(--border-accent);
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
   border: none;
   border-radius: 6px;
   font-size: 18px;
