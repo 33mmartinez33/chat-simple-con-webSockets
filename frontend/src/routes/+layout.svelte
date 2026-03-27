@@ -13,7 +13,7 @@
 
 <svelte:head>
     <link rel="icon" href={favicon} />
-    <link rel="preload" href="assets/img/fondo_principal.jpg" as="image" fetchpriority= "high">
+    <!-- <link rel="preload" href="assets/img/fondo_principal (1).jpg" as="image" fetchpriority= "high"> -->
 </svelte:head>
 
 {#if mostrarMenu}

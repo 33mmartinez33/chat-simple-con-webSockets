@@ -17,11 +17,10 @@ app = FastAPI(title="Chat API", version="1.0")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],  # SvelteKit dev
+    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],  
     allow_credentials=True,
     allow_methods=["*"], 
     allow_headers=["*"],
-    # max_age = 3600,
 )
 
 
@@ -686,7 +685,6 @@ async def websocket_sala(websocket: WebSocket, id_usuario: int, id_canal: int, i
 
         id_sala_str = f"{id_canal}_{id_sala}"
 
-        print("Es participante o admin y el id_sala_str es: ", id_sala_str)
         await manager.connect(websocket, id_sala_str, id_usuario)
         try:
             while True:

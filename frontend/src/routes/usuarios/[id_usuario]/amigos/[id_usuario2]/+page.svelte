@@ -60,28 +60,30 @@
     }
     
     $effect(() => {
-    mensajes = data.mensajes ?? [];
-    infoAmigo = data.infoAmigo ?? {};
+        mensajes = data.mensajes ?? [];
+        infoAmigo = data.infoAmigo ?? {};
 
-    // cierra el ws anterior y abre uno nuevo
-    if (ws) ws.close();
-    
-    ws = new WebSocket(`ws://localhost:8001/ws/usuarios/${data.id_usuario}/amigos/${data.id_usuario2}`);
-    
-    ws.onmessage = (event) => {
-        const mensaje = JSON.parse(event.data);
-        if (mensaje.id_usuario_emisor === Number(data.id_usuario)) {
-            mensajes = mensajes.map(m => m.id_mensaje === -1 ? mensaje : m);
-        } else {
-            mensajes = [...mensajes, mensaje];
-        }
+        // cierra el ws anterior y abre uno nuevo
+        if (ws) ws.close();
+        
+        ws = new WebSocket(`ws://localhost:8001/ws/usuarios/${data.id_usuario}/amigos/${data.id_usuario2}`);
+        
+
+        // Revisar seguridad 
+        ws.onmessage = (event) => {
+            const mensaje = JSON.parse(event.data);
+            if (mensaje.id_usuario_emisor === Number(data.id_usuario)) {
+                mensajes = mensajes.map(m => m.id_mensaje === -1 ? mensaje : m);
+            } else {
+                mensajes = [...mensajes, mensaje];
+            }
+            scrollAbajo();
+        };
+
         scrollAbajo();
-    };
 
-    scrollAbajo();
-
-    return () => ws.close(); // cleanup cuando cambia data o se destruye
-});
+        return () => ws.close(); // cleanup cuando cambia data o se destruye
+    });
 
     function irCanal(id_canal : number){
         goto (`/usuarios/${id_usuario}/canales/${id_canal}`);
@@ -123,6 +125,7 @@
     main {
         margin-left: 250px;
     }
+    
     #div-chat {
         margin-top: 1%;
         height: 800px;
@@ -172,7 +175,7 @@
     }
 
     .li-usrname {
-        color: #11caca;
+        color: var(--accent-quaternary);
         font-weight: bold;
         font-size: larger;
     }

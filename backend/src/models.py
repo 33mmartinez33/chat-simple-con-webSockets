@@ -1,7 +1,6 @@
 from typing import Optional
 import datetime
 import enum
-
 from sqlalchemy import CheckConstraint, Column, Date, DateTime, Enum, ForeignKeyConstraint, Index, Integer, PrimaryKeyConstraint, String, Table, Text, UniqueConstraint
 from sqlmodel import Field, Relationship, SQLModel
 

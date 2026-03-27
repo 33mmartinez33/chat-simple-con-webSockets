@@ -31,6 +31,7 @@
   --accent-primary:   #131313;   /* botones, activos, links */
   --accent-secondary: #80ffdb;   /* badges, tags, destellos */
   --accent-tertiary: #0eb6b6;   /* tags principales*/
+  --accent-quaternary: #11caca; /* bordes, estados hover, acentos menores */
 
   /* Texto */
   --text-primary:   #e0fffa;   /* títulos, texto principal */

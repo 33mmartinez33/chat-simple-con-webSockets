@@ -181,9 +181,8 @@
     .li-usrname {
         /* color: #9a39ee; */
         /* color: #6111ca; */
-        /* color: #190324; */
-        /* color: #11caca; */
-        color: #32eeee;
+        color: var(--accent-quaternary);
+        /* color: #32eeee; */
         font-weight: bold;
         font-size: larger;
     }
