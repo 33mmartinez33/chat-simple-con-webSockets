@@ -1,10 +1,14 @@
 import datetime
 import json
-from typing import Dict
+from typing import Annotated, Dict
 
-from fastapi import Depends, FastAPI, HTTPException, WebSocket, WebSocketDisconnect
+from fastapi import Depends, FastAPI, HTTPException, WebSocket, WebSocketDisconnect, status
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from jwt import InvalidTokenError
+import jwt
+from pwdlib import PasswordHash
 from pydantic import BaseModel, ConfigDict, EmailStr, field_validator
-from datetime import UTC, date
+from datetime import UTC, date, timedelta, timezone
 from enum import Enum
 
 from sqlmodel import select
@@ -69,6 +73,11 @@ class SalaUpdate(BaseModel):
     nombre_sala: str | None = None
 
 
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+
+
 
 
 # comprubea si el usuario es admin en el canal que se pasa por parametro
@@ -119,21 +128,37 @@ def son_amigos(session: Session, id_usuario1: int, id_usuario2: int):
 # LOGIN/REGISTRO
 
 # Usuario inicia sesión
+# @app.post("/login")
+# async def login(creds: Credenciales, session: Session = Depends(get_session)):
+#     usuario = session.exec(
+#     select(Usuarios).where(
+#         Usuarios.username == creds.username,
+#         Usuarios.contraseña == creds.contrasenha  # TODO: hashear
+#     )
+# ).first()
+#     if usuario:
+#         token = "jwt_123" # TODO token real OAuth2
+#         return {"message": "Operación exitosa", "token": token, "id_usuario": usuario.id_usuario}
+#     else:
+#         raise HTTPException(status_code=401, detail = "Las credenciales introducidas no son correctas")
+
+
 @app.post("/login")
-async def login(creds: Credenciales, session: Session = Depends(get_session)):
-    usuario = session.exec(
-    select(Usuarios).where(
-        Usuarios.username == creds.username,
-        Usuarios.contraseña == creds.contrasenha  # TODO: hashear
+async def login_for_access_token(
+    form_data: Annotated[OAuth2PasswordRequestForm, Depends()], session: Annotated[Session, Depends(get_session)]
+) -> Token:
+    user = authenticate_user(form_data.username, form_data.password, session)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect username or password",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    access_token = create_access_token(
+        data={"sub": user.username}, expires_delta=access_token_expires
     )
-).first()
-    if usuario:
-        token = "jwt_123" # TODO token real OAuth2
-        return {"message": "Operación exitosa", "token": token, "id_usuario": usuario.id_usuario}
-    else:
-        raise HTTPException(status_code=401, detail = "Las credenciales introducidas no son correctas")
-
-
+    return Token(access_token=access_token, token_type="bearer")
 
 #  Crea usuario
 @app.post("/sign_in")
@@ -148,7 +173,7 @@ async def sign_in(usuario: UsuarioCreate, session: Session = Depends(get_session
         usuario_insertar: Usuarios = Usuarios(
             email = usuario.email,
             username = usuario.username,
-            contraseña=usuario.contrasenha, # TODO falta hashear la contraseña
+            contraseña=get_password_hash(usuario.contrasenha), 
             fecha_de_nacimiento=usuario.fecha_de_nacimiento,
             fecha_de_alta=date.today()
         )
@@ -156,14 +181,12 @@ async def sign_in(usuario: UsuarioCreate, session: Session = Depends(get_session
         session.commit()
         session.refresh(usuario_insertar)  # ← ID autoincremental + datos frescos
     
-        # TODO: JWT real
-        token = "jwt_" + str(usuario_insertar.id_usuario)
+        access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+        access_token = create_access_token(
+            data={"sub": usuario.username}, expires_delta=access_token_expires
+        )
         
-        return {
-            "message": "Usuario creado exitosamente",
-            "token": token,
-            "id_usuario": usuario_insertar.id_usuario
-        }
+        return Token(access_token=access_token, token_type="bearer")
 
 
 # USUARIOS
@@ -305,7 +328,7 @@ async def get_canal(id_usuario: int, id_canal: int, session: Session = Depends(g
     elif not rol:
       raise HTTPException(status_code=403, detail="No tienes acceso a este canal")
     else:
-        return {**canal.model_dump(), "rol": rol.rol}
+        return {**canal.model_dump(), "rol": rol.rol} # ** desempaqueta 
 
 
 # Actualizar contenido/nombre canal
@@ -758,3 +781,138 @@ async def websocket_dm(websocket: WebSocket, id_usuario: int, id_usuario2: int, 
 
     except WebSocketDisconnect:
         manager.disconnect(id_sala_amigo, id_usuario)
+
+
+# openssl rand -hex 32
+SECRET_KEY = "099afba32ff1503e219ca9f597bb51f2e46f7ac93940b503e47da1eab1951543"
+ALGORITHM = "HS256"
+ACCESS_TOKEN_EXPIRE_MINUTES = 30
+
+
+
+# class Token(BaseModel):
+#     access_token: str
+#     token_type: str
+
+
+class TokenData(BaseModel):
+    username: str | None = None
+
+
+class User(BaseModel):
+    username: str
+    email: str | None = None
+    full_name: str | None = None
+    disabled: bool | None = None
+
+
+class UserInDB(User):
+    hashed_password: str
+
+
+password_hash = PasswordHash.recommended()
+
+# hash precalculado de una contraseña ficticia ("dummypassword") con propósito de prevenir ataques de temporización (timing attacks).
+DUMMY_HASH = password_hash.hash("dummypassword")
+
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
+
+
+# para legibilidad y desacoplamiento
+def verify_password(plain_password, hashed_password):
+    return password_hash.verify(plain_password, hashed_password)
+
+# para legibilidad y desacoplamiento
+def get_password_hash(password):
+    return password_hash.hash(password)
+
+
+def get_user(username: str, session: Session):
+    user_db = session.exec(
+        select(Usuarios).where(
+            Usuarios.username == username
+        )
+    ).first()
+
+    return user_db
+
+
+def authenticate_user(username: str, password: str, session: Session):
+    user = get_user(username, session)
+    if not user:
+        verify_password(password, DUMMY_HASH)
+        return False
+    if not verify_password(password, user.hashed_password):
+        return False
+    return user
+
+
+def create_access_token(data: dict, expires_delta: timedelta | None = None):
+    to_encode = data.copy()
+    if expires_delta:
+        expire = datetime.now(timezone.utc) + expires_delta
+    else:
+        expire = datetime.now(timezone.utc) + timedelta(minutes=15)
+    to_encode.update({"exp": expire})
+    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+    return encoded_jwt
+
+
+async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)], session: Session):
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        username = payload.get("sub")
+        if username is None:
+            raise credentials_exception
+        token_data = TokenData(username=username)
+    except InvalidTokenError:
+        raise credentials_exception
+    user = get_user(username=token_data.username, session=session)
+    if user is None:
+        raise credentials_exception
+    return user
+
+
+async def get_current_active_user(
+    current_user: Annotated[User, Depends(get_current_user)],
+):
+    if current_user.disabled:
+        raise HTTPException(status_code=400, detail="Inactive user")
+    return current_user
+
+
+@app.post("/login")
+async def login_for_access_token(
+    form_data: Annotated[OAuth2PasswordRequestForm, Depends()], session: Annotated[Session, Depends(get_session)]
+) -> Token:
+    user = authenticate_user(form_data.username, form_data.password, session)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect username or password",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    access_token = create_access_token(
+        data={"sub": user.username}, expires_delta=access_token_expires
+    )
+    return Token(access_token=access_token, token_type="bearer")
+
+
+@app.get("/users/me/")
+async def read_users_me(
+    current_user: Annotated[User, Depends(get_current_active_user)],
+) -> User:
+    return current_user
+
+
+@app.get("/users/me/items/")
+async def read_own_items(
+    current_user: Annotated[User, Depends(get_current_active_user)],
+):
+    return [{"item_id": "Foo", "owner": current_user.username}]
