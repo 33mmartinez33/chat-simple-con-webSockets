@@ -8,7 +8,7 @@
 
     const sinMenu = ['/', '/login', '/sign_in'];
     let mostrarMenu = $derived(!sinMenu.includes(page.url.pathname));
-	let id_usuario = $derived(page.params.id_usuario);
+	// let id_usuario = $derived(page.params.id_usuario);
 </script>
 
 <svelte:head>
@@ -19,7 +19,7 @@
 {#if mostrarMenu}
     <nav>
         <button class="btn-menu" onclick={() => {
-		goto(`/usuarios/${id_usuario}`);
+		goto(`/users/me`);
 		}}>
             <img src="/assets/img/logo-nexus-verde.JPG" alt="Nexus" />
         </button>

@@ -1,24 +1,25 @@
 <script>
-    let username = "";
-    let contraseña = "";
+	import { goto } from "$app/navigation";
+
+    let username = $state("");
+    let contraseña = $state("");
 
     async function login() {
         const response = await fetch('http://localhost:8001/login', { //consulta el endpoint con esta ruta 
             method: 'POST',
+            credentials: "include",
             headers: {
-                'Content-Type': 'application/json'  // ← JSON es lo que espera el backend
+                'Content-Type': 'application/x-www-form-urlencoded' // ← esto es lo que espera el backend                
             },
-            body: JSON.stringify({
+            body: new URLSearchParams({
                 username: username,
-                contrasenha: contraseña
+                password: contraseña
             })
         });
 
         if (response.ok) {
-            const data = await response.json();
-            localStorage.setItem('token', data.token);
-            localStorage.setItem('id_usuario', data.id_usuario.toString());
-            window.location.href = `/usuarios/${data.id_usuario}`; // Redirige
+            // console.log("Redirigiendo a /users/me")
+            goto("/users/me"); // Redirige
         } else { 
             const error = await response.json();
             alert(error.detail);

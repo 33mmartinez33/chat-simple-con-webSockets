@@ -38,7 +38,7 @@
     let { data } = $props();
     let mensajes: Mensajes[] = $state([]);
     let infoUser: Usuario = $derived(data.infoUser ?? {});
-    let id_usuario: number = $derived(Number(data.id_usuario ?? {}));
+    let id_usuario: number = $derived(Number(data.infoUser.id_usuario ?? {}));
     let sala: Sala = $derived(data.infoSala ?? {});
     let canales: Canal[] = $derived(data.canales ?? []);
     let amigos: Amigo[] = $derived(data.amigos ?? []);
@@ -62,7 +62,7 @@
         id_mensaje: -1,
         contenido,
         username: data.infoUser.username,
-        id_usuario_emisor: Number(data.id_usuario),
+        id_usuario_emisor: id_usuario,
         fecha: new Date()
     }];
 
@@ -78,11 +78,11 @@
     // cierra el ws anterior y abre uno nuevo
     if (ws) ws.close();
 
-    ws = new WebSocket(`ws://localhost:8001/ws/usuarios/${data.id_usuario}/canales/${data.id_canal}/salas/${data.id_sala}`);
+    ws = new WebSocket(`ws://localhost:8001/ws/users/me/channels/${data.id_canal}/rooms/${data.id_sala}`);
     
     ws.onmessage = (event) => {
         const mensaje = JSON.parse(event.data);
-        if (mensaje.id_usuario_emisor === Number(data.id_usuario)) {
+        if (mensaje.id_usuario_emisor === id_usuario) {
             mensajes = mensajes.map(m => m.id_mensaje === -1 ? mensaje : m);
         } else {
             mensajes = [...mensajes, mensaje];

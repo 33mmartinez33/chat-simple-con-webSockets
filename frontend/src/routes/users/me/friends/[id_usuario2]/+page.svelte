@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { goto } from '$app/navigation';
     import { tick } from 'svelte';
 	import Sidebar from '../../../../../components/Sidebar.svelte';
 
@@ -24,20 +23,29 @@
         nombre: string
     }
 
+    type InfoUser = {
+        id_usuario: number;
+        email: string;
+        username: string;
+        fecha_de_nacimiento: Date;
+        fecha_de_alta: Date;
+    }
+
     let { data } = $props();
     let mensajes: Mensajes[] = $state([]);
     let infoAmigo : Amigo = $derived(data.infoAmigo ?? {});
     let canales: Canal[] = $derived(data.canales ?? []);
     let amigos: Amigo[] = $derived(data.amigos ?? []);
-    let id_usuario: number = $derived(Number(data.id_usuario ?? {}));
+    let infoUser: InfoUser = $derived(data.infoUser ?? {});
+    let id_usuario: number = $derived(Number(infoUser.id_usuario ?? {}));
     let id_usuario2: number = $derived(Number(data.id_usuario2 ?? {}));
-
     let contenido = $state("");
 
     let ws: WebSocket;
     let listaMensajes: HTMLDivElement;
 
-        async function scrollAbajo() {
+
+    async function scrollAbajo() {
         await tick(); // espera a que svelte actualice el DOM
         listaMensajes.scrollTop = listaMensajes.scrollHeight;
     }
@@ -50,7 +58,7 @@
         id_mensaje: -1,
         contenido,
         username: data.infoUser.username,
-        id_usuario_emisor: Number(data.id_usuario),
+        id_usuario_emisor: id_usuario,
         fecha: new Date()
     }];
 
@@ -66,13 +74,13 @@
         // cierra el ws anterior y abre uno nuevo
         if (ws) ws.close();
         
-        ws = new WebSocket(`ws://localhost:8001/ws/usuarios/${data.id_usuario}/amigos/${data.id_usuario2}`);
+        ws = new WebSocket(`ws://localhost:8001/ws/users/me/friends/${data.id_usuario2}`);
         
 
         // Revisar seguridad 
         ws.onmessage = (event) => {
             const mensaje = JSON.parse(event.data);
-            if (mensaje.id_usuario_emisor === Number(data.id_usuario)) {
+            if (mensaje.id_usuario_emisor === id_usuario) {
                 mensajes = mensajes.map(m => m.id_mensaje === -1 ? mensaje : m);
             } else {
                 mensajes = [...mensajes, mensaje];
@@ -84,13 +92,6 @@
 
         return () => ws.close(); // cleanup cuando cambia data o se destruye
     });
-
-    function irCanal(id_canal : number){
-        goto (`/usuarios/${id_usuario}/canales/${id_canal}`);
-    }
-    function irAmigo(id_usuario2: number){
-        goto (`/usuarios/${id_usuario}/amigos/${id_usuario2}`);
-    }
 
 </script>
 

@@ -27,7 +27,7 @@ class Usuarios(SQLModel, table=True):
     amigos_id_usuario2: list['Amigos'] = Relationship(back_populates='usuarios_', sa_relationship_kwargs={'foreign_keys': '[Amigos.id_usuario2]'})
     canales: list['Canales'] = Relationship(back_populates='usuarios')
     rol_usuario_canal: list['RolUsuarioCanal'] = Relationship(back_populates='usuarios')
-    salas: list['Salas'] = Relationship(back_populates='usuarios', sa_relationship_kwargs={'secondary': 'usuarios_activos_sala'})
+    # salas: list['Salas'] = Relationship(back_populates='usuarios', sa_relationship_kwargs={'secondary': 'usuarios_activos_sala'})
     mensajes_id_usuario_emisor: list['Mensajes'] = Relationship(back_populates='usuarios', sa_relationship_kwargs={'foreign_keys': '[Mensajes.id_usuario_emisor]'})
     mensajes_id_usuario_receptor: list['Mensajes'] = Relationship(back_populates='usuarios_', sa_relationship_kwargs={'foreign_keys': '[Mensajes.id_usuario_receptor]'})
 
@@ -93,7 +93,7 @@ class Salas(SQLModel, table=True):
     nombre_sala: Optional[str] = Field(default=None, sa_column=Column('nombre_sala', String))
 
     canales: 'Canales' = Relationship(back_populates='salas')
-    usuarios: list['Usuarios'] = Relationship(back_populates='salas', sa_relationship_kwargs={'secondary': 'usuarios_activos_sala'})
+    # usuarios: list['Usuarios'] = Relationship(back_populates='salas', sa_relationship_kwargs={'secondary': 'usuarios_activos_sala'})
     mensajes: list['Mensajes'] = Relationship(back_populates='salas')
 
 
@@ -120,11 +120,11 @@ class Mensajes(SQLModel, table=True):
     usuarios_: Optional['Usuarios'] = Relationship(back_populates='mensajes_id_usuario_receptor', sa_relationship_kwargs={'foreign_keys': '[Mensajes.id_usuario_receptor]'})
 
 
-t_usuarios_activos_sala = Table(
-    'usuarios_activos_sala', SQLModel.metadata,
-    Column('id_usuario', Integer, primary_key=True),
-    Column('id_sala', Integer, primary_key=True),
-    ForeignKeyConstraint(['id_sala'], ['salas.id_sala'], name='usuarios_activos_sala_id_sala_fkey'),
-    ForeignKeyConstraint(['id_usuario'], ['usuarios.id_usuario'], name='usuarios_activos_sala_id_usuario_fkey'),
-    PrimaryKeyConstraint('id_usuario', 'id_sala', name='usuarios_activos_sala_pkey')
-)
+# t_usuarios_activos_sala = Table(
+#     'usuarios_activos_sala', SQLModel.metadata,
+#     Column('id_usuario', Integer, primary_key=True),
+#     Column('id_sala', Integer, primary_key=True),
+#     ForeignKeyConstraint(['id_sala'], ['salas.id_sala'], name='usuarios_activos_sala_id_sala_fkey'),
+#     ForeignKeyConstraint(['id_usuario'], ['usuarios.id_usuario'], name='usuarios_activos_sala_id_usuario_fkey'),
+#     PrimaryKeyConstraint('id_usuario', 'id_sala', name='usuarios_activos_sala_pkey')
+# )

@@ -1,28 +1,29 @@
 <script>
-    let email = "";
-    let username = "";
-    let contraseña = "";
-    let birthdate = "";
+	import { goto } from "$app/navigation";
+
+    let email = $state("");
+    let username = $state("");
+    let contraseña = $state("");
+    let birthdate = $state("");
 
     async function registro(){
         const response = await fetch("http://localhost:8001/sign_in", {
             method: "POST",
+            credentials: "include",
             headers: {
                 "Content-Type": "application/json"
             },
             body: JSON.stringify({
                 email: email,
                 username: username,
-                contrasenha: contraseña,
+                password: contraseña,
                 fecha_de_nacimiento: birthdate
             })
         });
 
         if (response.ok) {
-            const data = await response.json();
-            localStorage.setItem("token", data.token);
-            localStorage.setItem("id_usuario", data.id_usuario.toString());
-            window.location.href = `/usuarios/${data.id_usuario}`;
+            console.log("Respuesta ok: ", response)
+            goto("/users/me");
         } else {
             const error = await response.json();
             alert(error.detail);

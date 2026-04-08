@@ -16,20 +16,29 @@ import DialogoBuscar from '../../../components/DialogoBuscar.svelte';
         fecha_amistad: string;
     }
 
+    // type InfoUser = {
+    //     id_usuario: number;
+    //     email: string;
+    //     username: string;
+    //     fecha_de_nacimiento: Date;
+    //     fecha_de_alta: Date;
+    // }
+
     let { data } = $props();
     let canales: Canal[] = $derived(data.canales ?? []);
     let amigos: Amigo[] = $derived(data.amigos ?? []);
-    let id_usuario = $derived(Number(data.id_usuario));
+    // let infoUser: InfoUser = $derived(data.infoUser);
+    // let id_usuario = $derived(Number(infoUser.id_usuario));
 
     let dialogoCanal = $state<any>(null);
     let dialogoAmigo = $state<any>(null);
 
     function irCanal(id_canal: number) {
-        goto(`/usuarios/${id_usuario}/canales/${id_canal}`);
+        goto(`/users/me/channels/${id_canal}`);
     }
     
     function irAmigo(id_usuario2: number) {
-        goto(`/usuarios/${id_usuario}/amigos/${id_usuario2}`);
+        goto(`/users/me/friends/${id_usuario2}`);
     }
 
 </script>
@@ -90,12 +99,13 @@ import DialogoBuscar from '../../../components/DialogoBuscar.svelte';
 <DialogoBuscar
     bind:ref={dialogoCanal}
     titulo="Añadir canal"
-    endpoint="http://localhost:8001/canales"
+    endpoint="http://localhost:8001/channels"
     labelNombre="nombre"
     onclose={invalidateAll}
     onAnhadir={async (item) => {
-        await fetch(`http://localhost:8001/usuarios/${id_usuario}/canales/${item.id_canal}`, {
+        await fetch(`http://localhost:8001/users/me/channels/${item.id_canal}`, {
             method: 'POST',
+            credentials: "include",
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ id_canal: item.id_canal })
         });
@@ -104,12 +114,13 @@ import DialogoBuscar from '../../../components/DialogoBuscar.svelte';
 <DialogoBuscar
     bind:ref={dialogoAmigo}
     titulo="Añadir amigo"
-    endpoint="http://localhost:8001/usuarios"
+    endpoint="http://localhost:8001/users"
     labelNombre="username"
     onclose={invalidateAll}
     onAnhadir={async (item) => {
-        await fetch(`http://localhost:8001/usuarios/${id_usuario}/amigos/${item.id_usuario}`, {
+        await fetch(`http://localhost:8001/users/me/friends/${item.id_usuario}`, {
             method: 'POST',
+            credentials: "include",
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ id_usuario: item.id_usuario })
         });

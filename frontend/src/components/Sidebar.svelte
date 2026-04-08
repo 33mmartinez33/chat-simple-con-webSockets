@@ -68,13 +68,13 @@
     const rol = $derived(esAdmin ? "Adm": "Std");
 
     function irCanal(id_canal : number){
-        goto (`/usuarios/${id_usuario}/canales/${id_canal}`);
+        goto (`/users/me/channels/${id_canal}`);
     }
     function irSala(id_canal: number, id_sala: number){
-        goto (`/usuarios/${id_usuario}/canales/${id_canal}/salas/${id_sala}`);
+        goto (`/users/me/channels/${id_canal}/rooms/${id_sala}`);
     }
     function irAmigo(id_usuario2: number){
-        goto (`/usuarios/${id_usuario}/amigos/${id_usuario2}`);
+        goto (`/users/me/friends/${id_usuario2}`);
     }
 
 </script>
@@ -153,24 +153,23 @@
 
 <DialogoCrearCanal 
     bind:ref = {dialogoCrearCanal}
-    id_usuario = {Number(id_usuario)}
     onclose = {invalidateAll}
 />
 
 <DialogoCrearSala
     bind:ref = {dialogoCrearSala}
-    id_usuario = {Number(id_usuario)}
     id_canal = {canal?.id_canal}
     onclose = {invalidateAll}
 />
+
 <DialogoBuscar
     bind:ref={dialogoCanal}
     titulo="Añadir canal"
-    endpoint="http://localhost:8001/canales"
+    endpoint="http://localhost:8001/channels"
     labelNombre="nombre"
     onclose={invalidateAll}
     onAnhadir={async (item) => {
-        await fetch(`http://localhost:8001/usuarios/${id_usuario}/canales/${item.id_canal}`, {
+        await fetch(`http://localhost:8001/users/me/channels/${item.id_canal}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ id_canal: item.id_canal })
@@ -180,11 +179,11 @@
 <DialogoBuscar
     bind:ref={dialogoAmigo}
     titulo="Añadir amigo"
-    endpoint="http://localhost:8001/usuarios"
+    endpoint="http://localhost:8001/users"
     labelNombre="username"
     onclose={invalidateAll}
     onAnhadir={async (item) => {
-        await fetch(`http://localhost:8001/usuarios/${id_usuario}/amigos/${item.id_usuario}`, {
+        await fetch(`http://localhost:8001/users/me/friends/${item.id_usuario}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ id_usuario: item.id_usuario })

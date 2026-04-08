@@ -1,11 +1,10 @@
 <script lang="ts">
     interface  Props {
-        id_usuario: number;
         onclose: () => void;
         ref?: { abrir: () => void };
     }
 
-    let { id_usuario, onclose, ref = $bindable() }: Props = $props();
+    let { onclose, ref = $bindable() }: Props = $props();
 
     let dialog = $state<HTMLDialogElement | null>(null);
     let nombre_canal = $state("");
@@ -27,7 +26,7 @@
     }
 
     async function crear() {
-        await fetch(`http://localhost:8001/usuarios/${id_usuario}/canales`, {
+        await fetch(`http://localhost:8001/users/me/channels`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ nombre_canal, contenido_principal })

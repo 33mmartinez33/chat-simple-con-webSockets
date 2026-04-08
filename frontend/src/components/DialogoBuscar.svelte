@@ -29,7 +29,7 @@
         clearTimeout(timeout);
         if (busqueda.length < 2) { filtrados = []; return; }
         timeout = setTimeout(async () => {
-            const res = await fetch(`${endpoint}?q=${busqueda}`);
+            const res = await fetch(`${endpoint}?q=${busqueda}`, {credentials: "include"});
             filtrados = await res.json();
         }, 300);
     }
