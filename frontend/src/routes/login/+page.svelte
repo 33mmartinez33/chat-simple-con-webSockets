@@ -1,11 +1,12 @@
 <script>
 	import { goto } from "$app/navigation";
+	import { PUBLIC_API_URL } from "$env/static/public";
 
     let username = $state("");
     let contraseña = $state("");
 
     async function login() {
-        const response = await fetch('http://localhost:8001/login', { //consulta el endpoint con esta ruta 
+        const response = await fetch(`${PUBLIC_API_URL}/login`, { //consulta el endpoint con esta ruta 
             method: 'POST',
             credentials: "include",
             headers: {

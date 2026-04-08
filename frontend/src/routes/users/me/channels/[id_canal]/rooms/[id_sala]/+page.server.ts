@@ -1,3 +1,4 @@
+import { PUBLIC_API_URL } from "$env/static/public";
 import { redirect } from "@sveltejs/kit";
 
 export async function load({ fetch, cookies, params}) {
@@ -11,13 +12,13 @@ export async function load({ fetch, cookies, params}) {
     }    
 
     const [resMensajes, resInfoUser, resCanales, resAmigos, resSala, resCanal, resSalas] = await Promise.all([
-        fetch(`http://localhost:8001/users/me/channels/${id_canal}/rooms/${id_sala}/messages`),
-        fetch(`http://localhost:8001/users/me`),
-        fetch(`http://localhost:8001/users/me/channels`),
-        fetch(`http://localhost:8001/users/me/friends`),
-        fetch(`http://localhost:8001/users/me/channels/${id_canal}/rooms/${id_sala}`),
-        fetch(`http://localhost:8001/users/me/channels/${id_canal}`),
-        fetch(`http://localhost:8001/users/me/channels/${id_canal}/rooms`)
+        fetch(`${PUBLIC_API_URL}/users/me/channels/${id_canal}/rooms/${id_sala}/messages`),
+        fetch(`${PUBLIC_API_URL}/users/me`),
+        fetch(`${PUBLIC_API_URL}/users/me/channels`),
+        fetch(`${PUBLIC_API_URL}/users/me/friends`),
+        fetch(`${PUBLIC_API_URL}/users/me/channels/${id_canal}/rooms/${id_sala}`),
+        fetch(`${PUBLIC_API_URL}/users/me/channels/${id_canal}`),
+        fetch(`${PUBLIC_API_URL}/users/me/channels/${id_canal}/rooms`)
     ]);
 
     

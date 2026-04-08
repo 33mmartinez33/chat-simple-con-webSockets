@@ -1,5 +1,6 @@
 <script>
 	import { goto } from "$app/navigation";
+	import { PUBLIC_API_URL } from "$env/static/public";
 
     let email = $state("");
     let username = $state("");
@@ -7,7 +8,7 @@
     let birthdate = $state("");
 
     async function registro(){
-        const response = await fetch("http://localhost:8001/sign_in", {
+        const response = await fetch(`${PUBLIC_API_URL}/sign_in`, {
             method: "POST",
             credentials: "include",
             headers: {

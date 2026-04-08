@@ -1,5 +1,6 @@
 <script lang="ts">
 import { goto, invalidateAll } from '$app/navigation';
+	import { PUBLIC_API_URL } from '$env/static/public';
 import DialogoBuscar from '../../../components/DialogoBuscar.svelte';
 
     type Canal = {
@@ -99,11 +100,11 @@ import DialogoBuscar from '../../../components/DialogoBuscar.svelte';
 <DialogoBuscar
     bind:ref={dialogoCanal}
     titulo="Añadir canal"
-    endpoint="http://localhost:8001/channels"
+    endpoint={`${PUBLIC_API_URL}/channels`}
     labelNombre="nombre"
     onclose={invalidateAll}
     onAnhadir={async (item) => {
-        await fetch(`http://localhost:8001/users/me/channels/${item.id_canal}`, {
+        await fetch(`${PUBLIC_API_URL}/users/me/channels/${item.id_canal}`, {
             method: 'POST',
             credentials: "include",
             headers: { 'Content-Type': 'application/json' },
@@ -114,11 +115,11 @@ import DialogoBuscar from '../../../components/DialogoBuscar.svelte';
 <DialogoBuscar
     bind:ref={dialogoAmigo}
     titulo="Añadir amigo"
-    endpoint="http://localhost:8001/users"
+    endpoint={`${PUBLIC_API_URL}/users`}
     labelNombre="username"
     onclose={invalidateAll}
     onAnhadir={async (item) => {
-        await fetch(`http://localhost:8001/users/me/friends/${item.id_usuario}`, {
+        await fetch(`${PUBLIC_API_URL}/users/me/friends/${item.id_usuario}`, {
             method: 'POST',
             credentials: "include",
             headers: { 'Content-Type': 'application/json' },

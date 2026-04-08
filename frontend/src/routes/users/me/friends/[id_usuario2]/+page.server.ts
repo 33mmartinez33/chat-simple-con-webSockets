@@ -1,3 +1,4 @@
+import { PUBLIC_API_URL } from "$env/static/public";
 import { redirect } from "@sveltejs/kit";
 
 export async function load({ fetch, cookies, params}) {
@@ -9,11 +10,11 @@ export async function load({ fetch, cookies, params}) {
     }
 
     const [resMensajes, resInfoAmigo, resInfoUser, resCanales, resAmigos] = await Promise.all([
-        fetch(`http://localhost:8001/users/me/friends/${id_usuario2}/messages`),
-        fetch(`http://localhost:8001/users/me/friends/${id_usuario2}`),
-        fetch(`http://localhost:8001/users/me`),
-        fetch(`http://localhost:8001/users/me/channels`),
-        fetch(`http://localhost:8001/users/me/friends`)
+        fetch(`${PUBLIC_API_URL}/users/me/friends/${id_usuario2}/messages`),
+        fetch(`${PUBLIC_API_URL}/users/me/friends/${id_usuario2}`),
+        fetch(`${PUBLIC_API_URL}/users/me`),
+        fetch(`${PUBLIC_API_URL}/users/me/channels`),
+        fetch(`${PUBLIC_API_URL}/users/me/friends`)
     ]);
 
     if (resMensajes.status === 401 || resInfoAmigo.status === 401 || resInfoUser.status === 401 || resCanales.status === 401 || resAmigos.status === 401) {

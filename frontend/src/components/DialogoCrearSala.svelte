@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { PUBLIC_API_URL } from "$env/static/public";
+
     interface  Props {
         id_canal: number;
         onclose: () => void;
@@ -27,7 +29,7 @@
     }
 
     async function crear() {
-        await fetch(`http://localhost:8001/users/me/channels/${id_canal}/rooms`, {
+        await fetch(`${PUBLIC_API_URL}/users/me/channels/${id_canal}/rooms`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ nombre_sala, tipo })

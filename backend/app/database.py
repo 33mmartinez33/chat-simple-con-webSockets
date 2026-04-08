@@ -22,10 +22,10 @@
 
 
 from sqlmodel import SQLModel, create_engine, Session
+from .config import settings
 
 
-DATABASE_URL = "postgresql://postgres:passwordpg@localhost:5432/chatconwebsockets"
-engine = create_engine(DATABASE_URL)
+engine = create_engine(settings.DATABASE_URL)
 
 
 def create_db_and_tables():

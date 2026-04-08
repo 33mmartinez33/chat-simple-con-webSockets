@@ -5,6 +5,7 @@
 	import DialogoCrearCanal from './DialogoCrearCanal.svelte';
 	import BtnAdd from './BtnAdd.svelte';
 	import BtnNew from './BtnNew.svelte';
+	import { PUBLIC_API_URL } from '$env/static/public';
 	
     type Mensajes = {
         id_mensaje: number,
@@ -165,11 +166,11 @@
 <DialogoBuscar
     bind:ref={dialogoCanal}
     titulo="Añadir canal"
-    endpoint="http://localhost:8001/channels"
+    endpoint={`${PUBLIC_API_URL}/channels`}
     labelNombre="nombre"
     onclose={invalidateAll}
     onAnhadir={async (item) => {
-        await fetch(`http://localhost:8001/users/me/channels/${item.id_canal}`, {
+        await fetch(`${PUBLIC_API_URL}/users/me/channels/${item.id_canal}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ id_canal: item.id_canal })
@@ -179,11 +180,11 @@
 <DialogoBuscar
     bind:ref={dialogoAmigo}
     titulo="Añadir amigo"
-    endpoint="http://localhost:8001/users"
+    endpoint={`${PUBLIC_API_URL}/users`}
     labelNombre="username"
     onclose={invalidateAll}
     onAnhadir={async (item) => {
-        await fetch(`http://localhost:8001/users/me/friends/${item.id_usuario}`, {
+        await fetch(`${PUBLIC_API_URL}/users/me/friends/${item.id_usuario}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ id_usuario: item.id_usuario })

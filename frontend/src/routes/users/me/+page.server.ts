@@ -1,3 +1,4 @@
+import { PUBLIC_API_URL } from "$env/static/public";
 import { redirect } from "@sveltejs/kit";
 
 export async function load({ fetch, cookies }) {
@@ -8,9 +9,9 @@ export async function load({ fetch, cookies }) {
         redirect(303, "/login");
     }
     const [resUser, resCanales, resAmigos] = await Promise.all([ //datos que se obtienen de los endpoints
-        fetch(`http://localhost:8001/users/me`),        
-        fetch(`http://localhost:8001/users/me/channels`),
-        fetch(`http://localhost:8001/users/me/friends`)
+        fetch(`${PUBLIC_API_URL}/users/me`),        
+        fetch(`${PUBLIC_API_URL}/users/me/channels`),
+        fetch(`${PUBLIC_API_URL}/users/me/friends`)
     ]);
 
     if (resUser.status === 401 || resCanales.status === 401 || resAmigos.status === 401) {

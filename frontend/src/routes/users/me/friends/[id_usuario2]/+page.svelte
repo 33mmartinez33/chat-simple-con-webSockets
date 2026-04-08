@@ -1,6 +1,7 @@
 <script lang="ts">
     import { tick } from 'svelte';
 	import Sidebar from '../../../../../components/Sidebar.svelte';
+    import { PUBLIC_WS_URL } from "$env/static/public";
 
     type Mensajes = {
         id_mensaje: number,
@@ -74,7 +75,7 @@
         // cierra el ws anterior y abre uno nuevo
         if (ws) ws.close();
         
-        ws = new WebSocket(`ws://localhost:8001/ws/users/me/friends/${data.id_usuario2}`);
+        ws = new WebSocket(`${PUBLIC_WS_URL}/ws/users/me/friends/${data.id_usuario2}`);
         
 
         // Revisar seguridad 
