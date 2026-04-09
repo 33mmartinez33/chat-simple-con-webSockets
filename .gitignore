@@ -10,6 +10,7 @@ wheels/
 .venv
 
 # Backend específico
+backend/.env
 backend/.venv/
 backend/__pycache__/
 
@@ -33,6 +34,7 @@ node_modules
 Thumbs.db
 
 # Env
+*.env
 .env
 .env.*
 !.env.example
