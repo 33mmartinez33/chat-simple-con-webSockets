@@ -12,11 +12,12 @@ from sqlmodel import Session, select
 from ..database import get_session
 from ..dependencies import SessionDep, authenticate_user, create_access_token, get_password_hash
 
-# LOGIN/REGISTRO
 
 router = APIRouter(tags=["auth"])
-# Usuario inicia sesión
 
+# LOGIN/REGISTRO
+
+# Usuario inicia sesión
 @router.post("/login")
 async def login_for_access_token(response: Response,
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()], session: Annotated[Session, Depends(get_session)]):

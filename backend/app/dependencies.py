@@ -82,6 +82,8 @@ async def get_current_user(session: Annotated[Session, Depends(get_session)], ac
     try:
         payload = jwt.decode(access_token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
         print("jwt decodificado")
+        print("jwt decodificado, expira:", payload.get("exp"))
+        print("ahora:", datetime.now(timezone.utc).timestamp())
         id_usuario = payload.get("sub")
         if id_usuario is None:
             print("id usuario es none, excepcion")

@@ -2,6 +2,7 @@
 	import { tick } from 'svelte';
 	import Sidebar from '../../../../../../../components/Sidebar.svelte';
 	import { PUBLIC_WS_URL } from '$env/static/public';
+	import { toast, Toaster } from 'svelte-sonner';
 
 
     type Mensajes = {
@@ -21,7 +22,7 @@
     type Canal = {
 		id_canal: number,
         nombre: string,
-        rol: "PARTICIPANTE" | "ADMIN"
+        rol: "participante" | "administrador"
     };
     type Amigo = {
         id_amigo: number,
@@ -47,6 +48,7 @@
     let salas: Sala[] = $derived(data.salas ?? []);
 
     let ws: WebSocket;
+    let cierreIntencionado = false;
     let listaMensajes: HTMLDivElement;
 
         async function scrollAbajo() {
@@ -73,28 +75,50 @@
     }
     
     $effect(() => {
-    mensajes = data.mensajes ?? [];
-    infoUser = data.infoUser ?? {};
+        mensajes = data.mensajes ?? [];
+        infoUser = data.infoUser ?? {};
 
-    // cierra el ws anterior y abre uno nuevo
-    if (ws) ws.close();
-
-    ws = new WebSocket(`${PUBLIC_WS_URL}/ws/users/me/channels/${data.id_canal}/rooms/${data.id_sala}`);
-    
-    ws.onmessage = (event) => {
-        const mensaje = JSON.parse(event.data);
-        if (mensaje.id_usuario_emisor === id_usuario) {
-            mensajes = mensajes.map(m => m.id_mensaje === -1 ? mensaje : m);
-        } else {
-            mensajes = [...mensajes, mensaje];
+        // cierra el ws anterior y abre uno nuevo
+        if (ws) {
+            cierreIntencionado = true;
+            ws.close();
         }
+
+        ws = new WebSocket(`${PUBLIC_WS_URL}/ws/users/me/channels/${data.id_canal}/rooms/${data.id_sala}`);
+        
+        ws.onerror = () => {
+            toast.error('Error de conexión');
+        };
+
+        ws.onclose = (event) => {
+            if (event.code !== 1000 && !cierreIntencionado) {
+                toast.error('Conexión perdida', {
+                    action: {
+                        label: 'Reconectar',
+                        onClick: () => window.location.reload()
+                    }
+                });
+            }
+        };
+
+        ws.onmessage = (event) => {
+            const mensaje = JSON.parse(event.data);
+            if (mensaje.error) {
+                toast.error(mensaje.error);
+            } else {
+                if (mensaje.id_usuario_emisor === id_usuario) {
+                    mensajes = mensajes.map(m => m.id_mensaje === -1 ? mensaje : m);
+                } else {
+                    mensajes = [...mensajes, mensaje];
+                }       
+                scrollAbajo();     
+            }  
+        };
+
         scrollAbajo();
-    };
 
-    scrollAbajo();
-
-    return () => ws.close(); // cleanup cuando cambia data o se destruye
-});
+        return () => ws.close(); // cleanup cuando cambia data o se destruye
+    });
 
 </script>
 
@@ -117,8 +141,9 @@
     </div>
 </main>
 
+<Toaster/>
+
 <Sidebar
-    id_usuario={id_usuario}
     canales={canales}
     amigos={amigos}
     canal={canal}

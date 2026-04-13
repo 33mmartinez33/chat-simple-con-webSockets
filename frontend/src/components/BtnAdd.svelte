@@ -35,9 +35,9 @@
     img{
         width: 12px;
         height: 12px;
-filter: brightness(0) saturate(100%)
-        invert(85%) sepia(50%)
-        saturate(400%) hue-rotate(130deg)
-        brightness(110%);
+        filter: brightness(0) saturate(100%)
+                invert(85%) sepia(50%)
+                saturate(400%) hue-rotate(130deg)
+                brightness(110%);
     }
 </style>

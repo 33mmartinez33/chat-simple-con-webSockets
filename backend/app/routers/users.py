@@ -1,7 +1,3 @@
-
-# USUARIOS
-
-# Ver todos los usuarios
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Response, status
@@ -13,6 +9,10 @@ from ..schemas import User, UsuarioUpdate
 
 router = APIRouter(tags=["users"])
 
+
+# USUARIOS
+
+# Ver todos los usuarios
 @router.get("/users")
 async def get_todos_usuarios(_current_user: Annotated[User, Depends(get_current_user)], session: SessionDep, q: str | None = None):
     if q:
@@ -61,7 +61,7 @@ async def actualizar_usuario(nuevos_datos: UsuarioUpdate, current_user: Annotate
 
 # Eliminar usuario
 @router.delete("/users/me")
-async def elimina_usuario(current_user: Annotated[User, Depends(get_current_user)], session: SessionDep):
+async def elimina_usuario(response: Response, current_user: Annotated[User, Depends(get_current_user)], session: SessionDep):
     usuario_db = session.get(Usuarios, current_user.id_usuario)
     if not usuario_db:
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
@@ -69,4 +69,7 @@ async def elimina_usuario(current_user: Annotated[User, Depends(get_current_user
     session.delete(usuario_db)
     session.commit()
 
-    return Response(status_code=status.HTTP_204_NO_CONTENT)
+    response.status_code = status.HTTP_204_NO_CONTENT
+    response.delete_cookie(key="access_token")
+
+    return response

@@ -1,34 +1,21 @@
 import { PUBLIC_API_URL } from "$env/static/public";
-import { redirect } from "@sveltejs/kit";
+import { apiFetch } from "$lib/api.js";
 
 export async function load({params, fetch, cookies}) {
     const {  id_canal } = params;
-    
-        const token = cookies.get("access_token");
-        
-        if (!token) {
-            // redirigir al login si no hay token
-            redirect(303, "/login");
-        }
 
-    const [ resInfoUser, resCanales, resSalas, resAmigos, resCanal] = await Promise.all([
-        fetch(`${PUBLIC_API_URL}/users/me`),
-        fetch(`${PUBLIC_API_URL}/users/me/channels`),
-        fetch(`${PUBLIC_API_URL}/users/me/channels/${id_canal}/rooms`),
-        fetch(`${PUBLIC_API_URL}/users/me/friends`),
-        fetch(`${PUBLIC_API_URL}/users/me/channels/${id_canal}`),
+    // fetch automaticamente envia las cookies al backend, el cual comprueba el jwt de la cookies acces_token
+    // cookies se utiliza para en caso de que haya una redireccion al /login por fin de sesion, se transmite la informacion al page.server del /login la cookie flash seteada en api.ts cunado se detecta un error que devuelve el backend con 401, no autorizado (token inválido)
+
+    const [ infoUser, canales, salas, amigos, canal] = await Promise.all([
+        apiFetch(fetch, `${PUBLIC_API_URL}/users/me`, cookies),
+        apiFetch(fetch, `${PUBLIC_API_URL}/users/me/channels`, cookies),
+        apiFetch(fetch, `${PUBLIC_API_URL}/users/me/channels/${id_canal}/rooms`, cookies),
+        apiFetch(fetch, `${PUBLIC_API_URL}/users/me/friends`, cookies),
+        apiFetch(fetch, `${PUBLIC_API_URL}/users/me/channels/${id_canal}`, cookies),
 
     ]);
 
-    if (resInfoUser.status === 401 || resCanales.status === 401 || resSalas.status === 401 || resAmigos.status === 401 || resCanal.status === 401) {
-        redirect(303, "/login");
-    }
-
-    const infoUser = resInfoUser.ok ? await resInfoUser.json(): {};
-    const canales = resCanales.ok ? await resCanales.json(): [];
-    const salas = resSalas.ok ? await resSalas.json(): [];
-    const amigos = resAmigos.ok ? await resAmigos.json(): [];
-    const canal = resCanal.ok ? await resCanal.json(): {};
 
     return { id_canal, infoUser, canales, salas, amigos, canal};
 }

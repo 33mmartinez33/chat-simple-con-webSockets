@@ -1,29 +1,12 @@
 import { PUBLIC_API_URL } from "$env/static/public";
-import { redirect } from "@sveltejs/kit";
+import { apiFetch } from "$lib/api";
 
 export async function load({ fetch, cookies }) {
-    const token = cookies.get("access_token");
-    
-    if (!token) {
-        // redirigir al login si no hay token
-        redirect(303, "/login");
-    }
-    const [resUser, resCanales, resAmigos] = await Promise.all([ //datos que se obtienen de los endpoints
-        fetch(`${PUBLIC_API_URL}/users/me`),        
-        fetch(`${PUBLIC_API_URL}/users/me/channels`),
-        fetch(`${PUBLIC_API_URL}/users/me/friends`)
+    const [infoUser, canales, amigos] = await Promise.all([
+        apiFetch(fetch, `${PUBLIC_API_URL}/users/me`, cookies), // las cookies se envian al apifetch para que valide, en caso de error 401 si es producido por sesion expirada
+        apiFetch(fetch, `${PUBLIC_API_URL}/users/me/channels`, cookies),
+        apiFetch(fetch, `${PUBLIC_API_URL}/users/me/friends`, cookies)
     ]);
 
-    if (resUser.status === 401 || resCanales.status === 401 || resAmigos.status === 401) {
-        redirect(303, "/login");
-    }
-
-    const infoUser = resUser.ok? await resUser.json() : {};
-    const canales = resCanales.ok ? await resCanales.json() : []; // Operador ternario, true lista de canales, false un list vacio
-    const amigos = resAmigos.ok ?  await resAmigos.json() : [];
-
-
-    return { infoUser, canales, amigos};
-
-
+    return { infoUser, canales, amigos };
 }

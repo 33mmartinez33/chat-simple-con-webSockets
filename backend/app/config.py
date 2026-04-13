@@ -12,3 +12,4 @@ class Settings(BaseSettings):
         env_file = ".env"
 
 settings = Settings()
+print("ACCESS_TOKEN_EXPIRE_MINUTES:", settings.ACCESS_TOKEN_EXPIRE_MINUTES)

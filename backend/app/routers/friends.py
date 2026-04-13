@@ -1,12 +1,8 @@
-
-# AMIGOS
-
-# Get lista amigos
 from datetime import date
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException
-from sqlmodel import select
+from sqlmodel import and_, or_, select
 
 from ..dependencies import SessionDep, get_current_user
 from ..models import Amigos, Usuarios
@@ -14,6 +10,9 @@ from ..schemas import User
 
 router = APIRouter(tags=["friends"])
 
+# AMIGOS
+
+# Get lista amigos
 @router.get("/users/me/friends")
 async def get_amigos(current_user: Annotated[User, Depends(get_current_user)], session: SessionDep):
     amigos1 = session.exec(
@@ -90,13 +89,14 @@ async def anhadir_amigo(current_user: Annotated[User, Depends(get_current_user)]
         return {"message": "Amigo añadido"}
 
 
-# Eliminar amigo
 @router.delete("/users/me/friends/{id_usuario2}")
 async def eliminar_amigo(current_user: Annotated[User, Depends(get_current_user)], id_usuario2: int, session: SessionDep):
     amistad = session.exec(
         select(Amigos).where(
-            Amigos.id_usuario1 == current_user.id_usuario,
-            Amigos.id_usuario2 == id_usuario2
+            or_(
+                and_(Amigos.id_usuario1 == current_user.id_usuario, Amigos.id_usuario2 == id_usuario2),
+                and_(Amigos.id_usuario1 == id_usuario2, Amigos.id_usuario2 == current_user.id_usuario)
+            )
         )
     ).first()
    
@@ -107,4 +107,3 @@ async def eliminar_amigo(current_user: Annotated[User, Depends(get_current_user)
     session.commit()
    
     return {"message": "Amigo eliminado exitosamente"}
-

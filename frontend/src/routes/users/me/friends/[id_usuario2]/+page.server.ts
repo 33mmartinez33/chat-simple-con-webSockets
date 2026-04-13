@@ -1,31 +1,17 @@
 import { PUBLIC_API_URL } from "$env/static/public";
-import { redirect } from "@sveltejs/kit";
+import { apiFetch } from "$lib/api.js";
 
-export async function load({ fetch, cookies, params}) {
+export async function load({ fetch, params, cookies }) {
     const { id_usuario2 } = params;
-    const token = cookies.get("access_token");
-    if (!token) {
-        // redirigir al login si no hay token
-         redirect(303, "/login");
-    }
 
-    const [resMensajes, resInfoAmigo, resInfoUser, resCanales, resAmigos] = await Promise.all([
-        fetch(`${PUBLIC_API_URL}/users/me/friends/${id_usuario2}/messages`),
-        fetch(`${PUBLIC_API_URL}/users/me/friends/${id_usuario2}`),
-        fetch(`${PUBLIC_API_URL}/users/me`),
-        fetch(`${PUBLIC_API_URL}/users/me/channels`),
-        fetch(`${PUBLIC_API_URL}/users/me/friends`)
+    const [mensajes, infoAmigo, infoUser, canales, amigos] = await Promise.all([
+        apiFetch(fetch, `${PUBLIC_API_URL}/users/me/friends/${id_usuario2}/messages`, cookies),
+        apiFetch(fetch, `${PUBLIC_API_URL}/users/me/friends/${id_usuario2}`, cookies),
+        apiFetch(fetch, `${PUBLIC_API_URL}/users/me`, cookies),
+        apiFetch(fetch, `${PUBLIC_API_URL}/users/me/channels`, cookies),
+        apiFetch(fetch, `${PUBLIC_API_URL}/users/me/friends`, cookies)
     ]);
 
-    if (resMensajes.status === 401 || resInfoAmigo.status === 401 || resInfoUser.status === 401 || resCanales.status === 401 || resAmigos.status === 401) {
-        redirect(303, "/login");
-    }
-
-    const mensajes = resMensajes.ok ? await resMensajes.json() : [];
-    const infoAmigo = resInfoAmigo.ok ? await resInfoAmigo.json() : {};
-    const infoUser = resInfoUser.ok ? await resInfoUser.json(): {};
-    const canales = resCanales.ok ? await resCanales.json(): [];
-    const amigos = resAmigos.ok ? await resAmigos.json(): [];
 
     return { id_usuario2, mensajes, infoAmigo, infoUser, canales, amigos };
 }

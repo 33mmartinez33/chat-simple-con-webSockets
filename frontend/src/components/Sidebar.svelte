@@ -6,25 +6,12 @@
 	import BtnAdd from './BtnAdd.svelte';
 	import BtnNew from './BtnNew.svelte';
 	import { PUBLIC_API_URL } from '$env/static/public';
-	
-    type Mensajes = {
-        id_mensaje: number,
-        contenido: string,
-        username: string,
-        id_usuario_emisor: number,
-        fecha: Date
-    };
-    type Usuario = {
-        id_usuario: number,
-        email: string,
-        username: string,
-        fecha_de_nacimiento: Date,
-        fecha_de_alta: Date
-    };
+    import { onMount } from 'svelte';
+
     type Canal = {
 		id_canal: number,
         nombre: string,
-        rol: "PARTICIPANTE" | "ADMIN"
+        rol: "participante" | "administrador"
     };
     type Amigo = {
         id_amigo: number,
@@ -40,7 +27,6 @@
     };
 
     interface Props {
-        id_usuario: number;
         canales: Canal[];
         amigos: Amigo[];
         canal?: Canal;
@@ -50,20 +36,23 @@
     }
 
     let {
-        id_usuario,
         canales = [],
         amigos = [],
         canal = undefined,
         salas = [],
         sala = undefined,
         id_usuario2 = undefined,
-    } = $props();
-
+    }: Props = $props();
 
     let dialogoCrearCanal = $state<any>(null);
     let dialogoCrearSala = $state<any>(null);
     let dialogoCanal = $state<any>(null);
     let dialogoAmigo = $state<any>(null);
+    let mounted = $state(false)
+
+    onMount(() => {
+        mounted = true;
+    });
 
     const esAdmin = $derived(canal?.rol?.toLowerCase() === 'administrador');
     const rol = $derived(esAdmin ? "Adm": "Std");
@@ -101,6 +90,7 @@
                                 <p class = "p-resaltado">{canal?.nombre} - <span>{rol}</span></p>
                                 {#if esAdmin}
                                     <BtnNew onclick={() => dialogoCrearSala?.abrir()} title="Crear sala"/>
+
                                 {/if}
                             </div>
                             {#each salas as s}
@@ -147,50 +137,51 @@
             </ul>
         </li>        
     </ul>
-
 </aside>
 
+{#if mounted}
+    <DialogoCrearCanal 
+        bind:ref = {dialogoCrearCanal}
+        onclose = {invalidateAll}
+    />
 
 
-<DialogoCrearCanal 
-    bind:ref = {dialogoCrearCanal}
-    onclose = {invalidateAll}
+    <DialogoBuscar
+        bind:ref={dialogoCanal}
+        titulo="Añadir canal"
+        endpoint={`${PUBLIC_API_URL}/channels`}
+        labelNombre="nombre"
+        onclose={invalidateAll}
+        onAnhadir={async (item) => {
+            await fetch(`${PUBLIC_API_URL}/users/me/channels/${item.id_canal}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id_canal: item.id_canal })
+            });
+        }}
+    />
+    <DialogoBuscar
+        bind:ref={dialogoAmigo}
+        titulo="Añadir amigo"
+        endpoint={`${PUBLIC_API_URL}/users`}
+        labelNombre="username"
+        onclose={invalidateAll}
+        onAnhadir={async (item) => {
+            await fetch(`${PUBLIC_API_URL}/users/me/friends/${item.id_usuario}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id_usuario: item.id_usuario })
+            });
+        }}
 />
-
-<DialogoCrearSala
-    bind:ref = {dialogoCrearSala}
-    id_canal = {canal?.id_canal}
-    onclose = {invalidateAll}
-/>
-
-<DialogoBuscar
-    bind:ref={dialogoCanal}
-    titulo="Añadir canal"
-    endpoint={`${PUBLIC_API_URL}/channels`}
-    labelNombre="nombre"
-    onclose={invalidateAll}
-    onAnhadir={async (item) => {
-        await fetch(`${PUBLIC_API_URL}/users/me/channels/${item.id_canal}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ id_canal: item.id_canal })
-        });
-    }}
-/>
-<DialogoBuscar
-    bind:ref={dialogoAmigo}
-    titulo="Añadir amigo"
-    endpoint={`${PUBLIC_API_URL}/users`}
-    labelNombre="username"
-    onclose={invalidateAll}
-    onAnhadir={async (item) => {
-        await fetch(`${PUBLIC_API_URL}/users/me/friends/${item.id_usuario}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ id_usuario: item.id_usuario })
-        });
-    }}
-/>
+    {#if esAdmin}
+        <DialogoCrearSala
+            bind:ref = {dialogoCrearSala}
+            id_canal = {canal!.id_canal}
+            onclose = {invalidateAll}
+        />
+    {/if}
+{/if}
 
 <style>
     ul {

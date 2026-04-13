@@ -1,7 +1,7 @@
 from datetime import date
 from enum import Enum
 
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, Field
 
 
 class User (BaseModel):
@@ -25,9 +25,9 @@ class TokenData(BaseModel):
 
 
 class UsuarioCreate(BaseModel):
-    email: EmailStr
-    username: str
-    password: str
+    email: EmailStr = Field(min_length=8, max_length=25)
+    username: str = Field(min_length= 3, max_length=16)
+    password: str = Field(min_length=6, max_length=20)
     fecha_de_nacimiento: date
 
 
@@ -57,3 +57,6 @@ class SalaCreate(BaseModel):
 class SalaUpdate(BaseModel):
     tipo: tipoSala | None = None
     nombre_sala: str | None = None
+
+class MensajeWs(BaseModel):
+    contenido: str = Field(min_length=1, max_length=4000)

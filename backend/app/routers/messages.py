@@ -1,7 +1,3 @@
-
-# MENSAJES
-
-# Ver mensajes sala
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -13,6 +9,9 @@ from ..schemas import User
 
 router = APIRouter(tags=["messages"])
 
+# MENSAJES
+
+# Ver mensajes sala
 @router.get("/users/me/channels/{id_canal}/rooms/{id_sala}/messages")
 async def get_mensajes_sala(current_user: Annotated[User, Depends(get_current_user)], id_canal: int, id_sala: int, session: SessionDep):
     sala = session.get(Salas, id_sala)

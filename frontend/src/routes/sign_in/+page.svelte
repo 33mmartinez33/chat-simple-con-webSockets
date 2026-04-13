@@ -38,13 +38,13 @@
         <div class="div-form">
             <form onsubmit={(e) => { e.preventDefault(); registro(); }}>
                 <label for="email">Email</label>
-                <input type="email" id="email" bind:value={email}>
+                <input type="email" id="email" bind:value={email} minlength="8" maxlength="25">
                 
                 <label for="username">Nombre de usuario</label>
-                <input type="text" id="username" bind:value={username}>
+                <input type="text" id="username" bind:value={username} minlength="3" maxlength="16">
 
                 <label for="password">Contraseña</label>
-                <input type="password" id="password" bind:value={contraseña}>
+                <input type="password" id="password" bind:value={contraseña} minlength="6" maxlength="20">
 
                 <label for="birthdate">Fecha de nacimiento</label>
                 <input type="date" id="birthdate" bind:value={birthdate}>

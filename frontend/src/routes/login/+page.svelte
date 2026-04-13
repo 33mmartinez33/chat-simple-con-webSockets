@@ -1,9 +1,20 @@
 <script>
 	import { goto } from "$app/navigation";
 	import { PUBLIC_API_URL } from "$env/static/public";
+	import { onMount } from "svelte";
+	import { toast, Toaster } from "svelte-sonner";
 
     let username = $state("");
     let contraseña = $state("");
+
+    let { data } = $props();
+
+    onMount (() => {
+        console.log('sesionExpirada:', data.sesionExpirada);
+        if (data.sesionExpirada) {
+            toast.error('Sesioón expirada')
+        }
+    })
 
     async function login() {
         const response = await fetch(`${PUBLIC_API_URL}/login`, { //consulta el endpoint con esta ruta 
@@ -28,16 +39,17 @@
     }
 </script>
 
+<Toaster/>
 <main>
     <div class="div-ext">
         <h1>¡Bienvenido!</h1>
         <div class="div-form">
             <form onsubmit={(e) => { e.preventDefault(); login(); }}>
                 <label for="username" id="primerLabel">Nombre de usuario</label>
-                <input type="text" id="username" bind:value={username}>
+                <input type="text" id="username" bind:value={username} minlength="3" maxlength="16">
 
                 <label for="contraseña">Contraseña</label>
-                <input type="password" id="contraseña" bind:value={contraseña}>
+                <input type="password" id="contraseña" bind:value={contraseña} minlength="3" maxlength="16">
 
                 <button class="botonFormulario" type="submit">Iniciar Sesión</button>
             </form>

@@ -1,39 +1,21 @@
 import { PUBLIC_API_URL } from "$env/static/public";
-import { redirect } from "@sveltejs/kit";
+import { apiFetch } from "$lib/api.js";
 
-export async function load({ fetch, cookies, params}) {
+export async function load({ fetch, params, cookies }) {
     const { id_canal, id_sala } = params;
 
-    const token = cookies.get("access_token");
-    
-    if (!token) {
-        // redirigir al login si no hay token
-        redirect(303, "/login");
-    }    
 
-    const [resMensajes, resInfoUser, resCanales, resAmigos, resSala, resCanal, resSalas] = await Promise.all([
-        fetch(`${PUBLIC_API_URL}/users/me/channels/${id_canal}/rooms/${id_sala}/messages`),
-        fetch(`${PUBLIC_API_URL}/users/me`),
-        fetch(`${PUBLIC_API_URL}/users/me/channels`),
-        fetch(`${PUBLIC_API_URL}/users/me/friends`),
-        fetch(`${PUBLIC_API_URL}/users/me/channels/${id_canal}/rooms/${id_sala}`),
-        fetch(`${PUBLIC_API_URL}/users/me/channels/${id_canal}`),
-        fetch(`${PUBLIC_API_URL}/users/me/channels/${id_canal}/rooms`)
+    const [mensajes, infoUser, canales, amigos, infoSala, canal, salas] = await Promise.all([
+        apiFetch(fetch, `${PUBLIC_API_URL}/users/me/channels/${id_canal}/rooms/${id_sala}/messages`, cookies),
+        apiFetch(fetch, `${PUBLIC_API_URL}/users/me`, cookies),
+        apiFetch(fetch, `${PUBLIC_API_URL}/users/me/channels`, cookies),
+        apiFetch(fetch, `${PUBLIC_API_URL}/users/me/friends`, cookies),
+        apiFetch(fetch, `${PUBLIC_API_URL}/users/me/channels/${id_canal}/rooms/${id_sala}`, cookies),
+        apiFetch(fetch, `${PUBLIC_API_URL}/users/me/channels/${id_canal}`, cookies),
+        apiFetch(fetch, `${PUBLIC_API_URL}/users/me/channels/${id_canal}/rooms`, cookies)
     ]);
 
-    
-    if (resMensajes.status === 401 || resInfoUser.status === 401 || resCanales.status === 401 || resAmigos.status === 401 || resSala.status === 401 || resCanal.status === 401 || resSalas.status === 401) {
-        redirect(303, "/login");
-    }
 
-
-    const mensajes = resMensajes.ok ? await resMensajes.json() : [];
-    const infoUser = resInfoUser.ok ? await resInfoUser.json(): {};
-    const canales = resCanales.ok ? await resCanales.json(): [];
-    const amigos = resAmigos.ok ? await resAmigos.json(): [];
-    const infoSala = resSala.ok ? await resSala.json(): {};
-    const canal = resCanal.ok ? await resCanal.json(): {};
-    const salas = resSalas.ok ? await resSalas.json(): {};
 
     return { id_canal, id_sala, mensajes, infoUser, canales, amigos, infoSala, canal, salas };
 }

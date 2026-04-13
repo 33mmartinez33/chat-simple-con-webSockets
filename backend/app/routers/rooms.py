@@ -1,7 +1,3 @@
-
-# SALAS
-
-# Ver sala
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -13,6 +9,9 @@ from ..schemas import SalaCreate, SalaUpdate, User
 
 router = APIRouter(tags=["rooms"])
 
+# SALAS
+
+# Ver sala
 @router.get("/users/me/channels/{id_canal}/rooms/{id_sala}")
 async def get_info_sala(current_user: Annotated[User, Depends(get_current_user)], id_canal: int, id_sala: int, session: SessionDep):
     sala = session.exec(

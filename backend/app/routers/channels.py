@@ -1,7 +1,3 @@
-
-# CANALES
-
-# Ver todos los canales
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -14,6 +10,9 @@ from ..schemas import CanalCreate, CanalUpdate, User
 
 router = APIRouter(tags=["channels"])
 
+# CANALES
+
+# Ver todos los canales
 @router.get("/channels")
 async def get_todos_canales(_current_user: Annotated[User, Depends(get_current_user)], q: str, session: SessionDep):
     if q:

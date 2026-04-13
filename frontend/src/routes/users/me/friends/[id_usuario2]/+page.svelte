@@ -2,6 +2,7 @@
     import { tick } from 'svelte';
 	import Sidebar from '../../../../../components/Sidebar.svelte';
     import { PUBLIC_WS_URL } from "$env/static/public";
+	import { toast, Toaster } from 'svelte-sonner';
 
     type Mensajes = {
         id_mensaje: number,
@@ -20,8 +21,9 @@
     };
 
     type Canal = {
-		id_canal: number;
+		id_canal: number
         nombre: string
+        rol: "participante" | "administrador"
     }
 
     type InfoUser = {
@@ -43,6 +45,7 @@
     let contenido = $state("");
 
     let ws: WebSocket;
+    let cierreIntencionado = false;
     let listaMensajes: HTMLDivElement;
 
 
@@ -73,20 +76,41 @@
         infoAmigo = data.infoAmigo ?? {};
 
         // cierra el ws anterior y abre uno nuevo
-        if (ws) ws.close();
+        if (ws) {
+            cierreIntencionado = true;
+            ws.close();
+        }
         
         ws = new WebSocket(`${PUBLIC_WS_URL}/ws/users/me/friends/${data.id_usuario2}`);
-        
+                    
+        ws.onerror = () => {
+            toast.error('Error de conexión');
+        };
+
+        ws.onclose = (event) => {
+            if (event.code !== 1000 && !cierreIntencionado) {
+                toast.error('Conexión perdida', {
+                    action: {
+                        label: 'Reconectar',
+                        onClick: () => window.location.reload()
+                    }
+                });
+            }
+        };
 
         // Revisar seguridad 
         ws.onmessage = (event) => {
             const mensaje = JSON.parse(event.data);
-            if (mensaje.id_usuario_emisor === id_usuario) {
-                mensajes = mensajes.map(m => m.id_mensaje === -1 ? mensaje : m);
+            if(mensaje.error) {
+                toast.error(mensaje.error);                
             } else {
-                mensajes = [...mensajes, mensaje];
+                if (mensaje.id_usuario_emisor === id_usuario) {
+                    mensajes = mensajes.map(m => m.id_mensaje === -1 ? mensaje : m);
+                } else {
+                    mensajes = [...mensajes, mensaje];
+                }
+                scrollAbajo();
             }
-            scrollAbajo();
         };
 
         scrollAbajo();
@@ -115,9 +139,9 @@
         <input type="text" placeholder="Escribe un mensaje..." onkeydown={(e) => { if (e.key === 'Enter') enviarMensaje() }} bind:value={contenido}>
     </div>
 </main>
+<Toaster/>
 
 <Sidebar
-    id_usuario={id_usuario}
     canales={canales}
     amigos={amigos}
     id_usuario2={id_usuario2} 
