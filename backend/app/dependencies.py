@@ -7,7 +7,7 @@ from sqlmodel import Session, select
 
 from .database import get_session
 from .models import Amigos, RolAdministradorParticipanteT, RolUsuarioCanal, Usuarios
-from .schemas import TokenData
+from .schemas import TokenData, User
 from .config import settings, ALLOWED_ORIGINS
 from pwdlib import PasswordHash
 
@@ -41,7 +41,7 @@ def get_user(id_usuario: int, session: Session):
 
 
 def authenticate_user(username: str, password: str, session: Session):
-    print("autenticando usuario")
+    # print("autenticando usuario")
     user = session.exec(
         select(Usuarios).where(
             Usuarios.username == username
@@ -86,7 +86,6 @@ async def get_current_user(session: Annotated[Session, Depends(get_session)], ac
         print("ahora:", datetime.now(timezone.utc).timestamp())
         id_usuario = payload.get("sub")
         if id_usuario is None:
-            print("id usuario es none, excepcion")
             raise credentials_exception
         token_data = TokenData(id_usuario=int(id_usuario))
     except jwt.InvalidTokenError:
@@ -98,12 +97,13 @@ async def get_current_user(session: Annotated[Session, Depends(get_session)], ac
     return user
 
 
-# Comprobar el origen de la cookie para ws
+# Comprobar el origen de la cookie (para ws)
 async def verify_origin(websocket: WebSocket):
     origin = websocket.headers.get("origin")
     if origin not in ALLOWED_ORIGINS:
         await websocket.close(code=1008)
         raise WebSocketException(code=1008)
+
 
 # comprubea si el usuario es admin en el canal que se pasa por parametro
 def es_admin(session: Session, id_usuario: int, id_canal: int):
@@ -144,4 +144,4 @@ def son_amigos(session: Session, id_usuario1: int, id_usuario2: int):
         )
     ).first())
 
-
+UserDependency = Annotated[User, Depends(get_current_user)]

@@ -3,7 +3,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException
 from sqlmodel import select
 
-from ..dependencies import es_admin, SessionDep, get_current_user
+from ..dependencies import UserDependency, es_admin, SessionDep, get_current_user
 from ..models import Canales, RolAdministradorParticipanteT, RolUsuarioCanal, Usuarios
 from ..schemas import CanalCreate, CanalUpdate, User
 
@@ -14,7 +14,7 @@ router = APIRouter(tags=["channels"])
 
 # Ver todos los canales
 @router.get("/channels")
-async def get_todos_canales(_current_user: Annotated[User, Depends(get_current_user)], q: str, session: SessionDep):
+async def get_todos_canales(_current_user: UserDependency, q: str, session: SessionDep):
     if q:
         canales_all = session.exec(
             select(Canales).where(Canales.nombre.contains(q))
@@ -26,7 +26,7 @@ async def get_todos_canales(_current_user: Annotated[User, Depends(get_current_u
 
 # Ver los canales del usuario autenticado
 @router.get("/users/me/channels")
-async def get_canales_usuario(current_user: Annotated[User, Depends(get_current_user)], session: SessionDep):
+async def get_canales_usuario(current_user: UserDependency, session: SessionDep):
     canales = session.exec(
         select(Canales).distinct().join(  # distinct() evita duplicados
             RolUsuarioCanal,
@@ -44,7 +44,7 @@ async def get_canales_usuario(current_user: Annotated[User, Depends(get_current_
 
 # Añadir canal a usuario
 @router.post("/users/me/channels/{id_canal}")
-async def anhadir_canal_usuario(current_user: Annotated[User, Depends(get_current_user)], id_canal: int, session: SessionDep):
+async def anhadir_canal_usuario(current_user: UserDependency, id_canal: int, session: SessionDep):
     if not session.get(Usuarios, current_user.id_usuario) or not session.get(Canales, id_canal):
         raise HTTPException(status_code=404, detail="Usuario o canal no encontrado")
     elif session.exec(
@@ -72,7 +72,7 @@ async def anhadir_canal_usuario(current_user: Annotated[User, Depends(get_curren
 
 # Ver canal
 @router.get("/users/me/channels/{id_canal}")
-async def get_canal(current_user: Annotated[User, Depends(get_current_user)], id_canal: int, session: SessionDep):
+async def get_canal(current_user: UserDependency, id_canal: int, session: SessionDep):
     canal = session.get(Canales, id_canal)
     rol = session.get(RolUsuarioCanal, (current_user.id_usuario, id_canal))
     if not canal:
@@ -86,7 +86,7 @@ async def get_canal(current_user: Annotated[User, Depends(get_current_user)], id
 
 # Crear canal
 @router.post("/users/me/channels")
-async def crear_canal(current_user: Annotated[User, Depends(get_current_user)], canal: CanalCreate, session: SessionDep):
+async def crear_canal(current_user: UserDependency, canal: CanalCreate, session: SessionDep):
     if session.exec(select(Canales).where(Canales.nombre == canal.nombre_canal)).first():
         raise HTTPException(status_code=400, detail="Nombre ya existente")
     else:
@@ -113,7 +113,7 @@ async def crear_canal(current_user: Annotated[User, Depends(get_current_user)], 
 
 # Actualizar contenido/nombre canal
 @router.put("/users/me/channels/{id_canal}")
-async def actualizar_contenido_canal(current_user: Annotated[User, Depends(get_current_user)], id_canal: int, canal_update: CanalUpdate, session: SessionDep):
+async def actualizar_contenido_canal(current_user: UserDependency, id_canal: int, canal_update: CanalUpdate, session: SessionDep):
     canal_db = session.get(Canales, id_canal)
     if not canal_db:
         raise HTTPException(status_code=404, detail="Canal no encontrado")
@@ -132,7 +132,7 @@ async def actualizar_contenido_canal(current_user: Annotated[User, Depends(get_c
 
 # Eliminar canal
 @router.delete("/users/me/channels/{id_canal}")
-async def eliminar_canal(current_user: Annotated[User, Depends(get_current_user)], id_canal:int, session: SessionDep):
+async def eliminar_canal(current_user: UserDependency, id_canal:int, session: SessionDep):
     canal_db = session.get(Canales, id_canal)
     if not canal_db:
         raise HTTPException(status_code=404, detail="Canal no encontrado")
