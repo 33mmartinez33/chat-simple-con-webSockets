@@ -64,28 +64,31 @@ async def ver_info_amigo(_current_user: Annotated[User, Depends(get_current_user
 # Añadir amigo
 @router.post("/users/me/friends/{id_usuario2}")
 async def anhadir_amigo(current_user: Annotated[User, Depends(get_current_user)], id_usuario2: int, session: SessionDep):
+    
+    usuario_menor = min(current_user.id_usuario, id_usuario2)
+    usuario_mayor = max(current_user.id_usuario, id_usuario2)
+
     if not session.get(Usuarios, current_user.id_usuario) or not session.get(Usuarios, id_usuario2):
         raise HTTPException(status_code=404, detail="Usuario no encontrado")  
     elif id_usuario2 == current_user.id_usuario:
-        raise HTTPException(status_code=400, detail="No puedes añadirte como amigo")  
+        raise HTTPException(status_code=400, detail="No puedes añadirte como amigo")
     elif session.exec(
         select(Amigos).where(
-            Amigos.id_usuario1 == current_user.id_usuario,
-            Amigos.id_usuario2 == id_usuario2
+            Amigos.id_usuario1 == usuario_menor,
+            Amigos.id_usuario2 == usuario_mayor
         )
     ).first():
         raise HTTPException(status_code=400, detail="Ya sois amigos")
     else:
         amistad = Amigos(
-            id_usuario1 = current_user.id_usuario,
-            id_usuario2 = id_usuario2,
+            id_usuario1 = usuario_menor,
+            id_usuario2 = usuario_mayor,
             fecha_amistad = date.today()
         )
         session.add(amistad)
         session.commit()
         session.refresh(amistad)
-
-
+        
         return {"message": "Amigo añadido"}
 
 

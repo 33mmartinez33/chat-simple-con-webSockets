@@ -50,7 +50,7 @@ async def sign_in(response: Response, usuario: UsuarioCreate, session: SessionDe
         usuario_insertar: Usuarios = Usuarios(
             email = usuario.email,
             username = usuario.username,
-            contraseña = get_password_hash(usuario.password),
+            contrasenha = get_password_hash(usuario.contrasenha),
             fecha_de_nacimiento=usuario.fecha_de_nacimiento,
             fecha_de_alta=date.today()
         )

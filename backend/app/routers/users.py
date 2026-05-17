@@ -45,10 +45,10 @@ async def actualizar_usuario(nuevos_datos: UsuarioUpdate, current_user: Annotate
         ).first()): # Por otro lado, si al intentar cambiar el username resulta que ya esta en uso, devuelve el error
 
         raise HTTPException(status_code=400, detail="Ese username ya esta en uso")
-    # si el usuario cambia la contraseña se hashea, no es elif porque puede cambiar el username tambien 
+    # si el usuario cambia la contrasenha se hashea, no es elif porque puede cambiar el username tambien 
 
-    if nuevos_datos.contraseña != None:        
-        nuevos_datos.contraseña = get_password_hash(nuevos_datos.contraseña)
+    if nuevos_datos.contrasenha != None:        
+        nuevos_datos.contrasenha = get_password_hash(nuevos_datos.contrasenha)
 
     nuevos_datos = nuevos_datos.model_dump(exclude_unset=True)
     usuario_db.sqlmodel_update(nuevos_datos)

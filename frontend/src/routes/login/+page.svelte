@@ -5,7 +5,7 @@
 	import { toast, Toaster } from "svelte-sonner";
 
     let username = $state("");
-    let contraseña = $state("");
+    let contrasenha = $state("");
 
     let { data } = $props();
 
@@ -25,7 +25,7 @@
             },
             body: new URLSearchParams({
                 username: username,
-                password: contraseña
+                password: contrasenha
             })
         });
 
@@ -48,8 +48,8 @@
                 <label for="username" id="primerLabel">Nombre de usuario</label>
                 <input type="text" id="username" bind:value={username} minlength="3" maxlength="16">
 
-                <label for="contraseña">Contraseña</label>
-                <input type="password" id="contraseña" bind:value={contraseña} minlength="3" maxlength="16">
+                <label for="contrasenha">Contraseña</label>
+                <input type="password" id="contrasenha" bind:value={contrasenha} minlength="3" maxlength="16">
 
                 <button class="botonFormulario" type="submit">Iniciar Sesión</button>
             </form>
@@ -63,6 +63,7 @@
         margin: auto;
         margin-top: 170px;
         width: 25%;
+        min-width: 350px;
         padding: 40px 40px 80px 40px;
         border: solid 1px var(--border-soft);
         border-radius: 12px;

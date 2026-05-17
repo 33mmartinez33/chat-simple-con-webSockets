@@ -12,28 +12,25 @@ class User (BaseModel):
     fecha_de_alta: date
 
 
-
-class tipoSala (str,Enum):
+class TipoSala (str,Enum):
     TEXTO = "texto"
     VOZ = "voz"
-
 
 
 class TokenData(BaseModel):
     id_usuario: int | None = None
 
 
-
 class UsuarioCreate(BaseModel):
     email: EmailStr = Field(min_length=8, max_length=25)
     username: str = Field(min_length= 3, max_length=16)
-    password: str = Field(min_length=6, max_length=20)
+    contrasenha: str = Field(min_length=6, max_length=20)
     fecha_de_nacimiento: date
 
 
 class UsuarioUpdate(BaseModel):
     username: str | None = None
-    contraseña: str | None = None
+    contrasenha: str | None = None
     fecha_de_nacimiento: str | None = None
 
 
@@ -48,15 +45,15 @@ class CanalUpdate(BaseModel):
     contenido_principal: str | None = None
 
 
-
 class SalaCreate(BaseModel):
-    tipo: tipoSala
+    tipo: TipoSala
     nombre_sala: str  
 
 
 class SalaUpdate(BaseModel):
-    tipo: tipoSala | None = None
+    tipo: TipoSala | None = None
     nombre_sala: str | None = None
+
 
 class MensajeWs(BaseModel):
     contenido: str = Field(min_length=1, max_length=4000)

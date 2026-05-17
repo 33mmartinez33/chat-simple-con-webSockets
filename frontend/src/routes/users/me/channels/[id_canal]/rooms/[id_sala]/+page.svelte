@@ -3,7 +3,7 @@
 	import Sidebar from '../../../../../../../components/Sidebar.svelte';
 	import { PUBLIC_WS_URL } from '$env/static/public';
 	import { toast, Toaster } from 'svelte-sonner';
-
+    // import { beforeNavigate } from '$app/navigation';
 
     type Mensajes = {
         id_mensaje: number,
@@ -48,14 +48,21 @@
     let salas: Sala[] = $derived(data.salas ?? []);
 
     let ws: WebSocket;
-    let cierreIntencionado = false;
+    // let cierreIntencionado = false;
+    // let navegandoALogin = false;
     let listaMensajes: HTMLDivElement;
 
-        async function scrollAbajo() {
+    async function scrollAbajo() {
         await tick(); // espera a que svelte actualice el DOM
         listaMensajes.scrollTop = listaMensajes.scrollHeight;
     }
     let contenido = $state("");
+
+    // beforeNavigate (({ to }) => {
+    //     if (to?.route.id === '/login' || to?.url.pathname === '/login') {
+    //         navegandoALogin = true;
+    //     }
+    // })
 
     function enviarMensaje() {
         if (!contenido.trim()) return;
@@ -80,7 +87,7 @@
 
         // cierra el ws anterior y abre uno nuevo
         if (ws) {
-            cierreIntencionado = true;
+            // cierreIntencionado = true;
             ws.close();
         }
 
@@ -90,16 +97,16 @@
             toast.error('Error de conexión');
         };
 
-        ws.onclose = (event) => {
-            if (event.code !== 1000 && !cierreIntencionado) {
-                toast.error('Conexión perdida', {
-                    action: {
-                        label: 'Reconectar',
-                        onClick: () => window.location.reload()
-                    }
-                });
-            }
-        };
+        // ws.onclose = (event) => {
+        //     if (event.code !== 1000 && !cierreIntencionado) {
+        //         toast.error('Conexión perdida', {
+        //             action: {
+        //                 label: 'Reconectar',
+        //                 onClick: () => window.location.reload()
+        //             }
+        //         });
+        //     }
+        // };
 
         ws.onmessage = (event) => {
             const mensaje = JSON.parse(event.data);

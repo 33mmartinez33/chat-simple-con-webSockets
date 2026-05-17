@@ -4,7 +4,7 @@
 
     let email = $state("");
     let username = $state("");
-    let contraseña = $state("");
+    let contrasenha = $state("");
     let birthdate = $state("");
 
     async function registro(){
@@ -17,7 +17,7 @@
             body: JSON.stringify({
                 email: email,
                 username: username,
-                password: contraseña,
+                contrasenha: contrasenha,
                 fecha_de_nacimiento: birthdate
             })
         });
@@ -43,8 +43,8 @@
                 <label for="username">Nombre de usuario</label>
                 <input type="text" id="username" bind:value={username} minlength="3" maxlength="16">
 
-                <label for="password">Contraseña</label>
-                <input type="password" id="password" bind:value={contraseña} minlength="6" maxlength="20">
+                <label for="contrasenha">Contraseña</label>
+                <input type="password" id="contrasenha" bind:value={contrasenha} minlength="6" maxlength="20">
 
                 <label for="birthdate">Fecha de nacimiento</label>
                 <input type="date" id="birthdate" bind:value={birthdate}>

@@ -16,13 +16,13 @@ SessionDep = Annotated[Session, Depends(get_session)]
 
 password_hash = PasswordHash.recommended()
 
-# hash precalculado de una contraseña ficticia ("dummypassword") con propósito de prevenir ataques de temporización (timing attacks).
+# hash precalculado de una contrasenha ficticia ("dummypassword") con propósito de prevenir ataques de temporización (timing attacks).
 DUMMY_HASH = password_hash.hash("dummypassword")
 
 
 # para legibilidad y desacoplamiento
 def verify_password(plain_password, hashed_password):
-    return password_hash.verify(plain_password, hashed_password) # Devuelve true o false segun si la contraseña coincide
+    return password_hash.verify(plain_password, hashed_password) # Devuelve true o false segun si la contrasenha coincide
 
 
 # para legibilidad y desacoplamiento
@@ -51,7 +51,7 @@ def authenticate_user(username: str, password: str, session: Session):
         verify_password(password, DUMMY_HASH)
         return False
     
-    if not verify_password(password, user.contraseña):
+    if not verify_password(password, user.contrasenha):
         return False
     
     return user
@@ -132,15 +132,13 @@ def es_participante_o_admin(session: Session, id_usuario: int, id_canal: int):
 
 # Comprueba si los 2 usuarios que se le pasa como parametro son amigos
 def son_amigos(session: Session, id_usuario1: int, id_usuario2: int):
+    menor = min(id_usuario1, id_usuario2)
+    mayor = max(id_usuario1, id_usuario2)
+    
     return bool(session.exec(
         select(Amigos).where(
-            Amigos.id_usuario1 == id_usuario1,
-            Amigos.id_usuario2 == id_usuario2            
-        )
-    ).first() or session.exec(
-        select(Amigos).where(
-            Amigos.id_usuario1 == id_usuario2,
-            Amigos.id_usuario2 == id_usuario1            
+            Amigos.id_usuario1 == menor,
+            Amigos.id_usuario2 == mayor
         )
     ).first())
 
