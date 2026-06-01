@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { PUBLIC_API_URL } from "$env/static/public";
+	import { toast } from 'svelte-sonner';
 
     interface  Props {
         onclose: () => void;
@@ -28,14 +29,23 @@
     }
 
     async function crear() {
-        await fetch(`${PUBLIC_API_URL}/users/me/channels`, {
-            method: 'POST',
-            credentials: 'include',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ nombre_canal, contenido_principal })
-        });
-        cerrar();
-}
+        try {
+            const res = await fetch(`${PUBLIC_API_URL}/users/me/channels`, {
+                method: 'POST',
+                credentials: 'include',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ nombre_canal, contenido_principal })
+            });
+            if (!res.ok) {
+                const data = await res.json();
+                toast.error(data.detail ?? 'Error al crear el canal');
+                return;
+            }
+            cerrar();
+        } catch {
+            toast.error('Error de conexión');
+        }
+    }
 </script>
 
 <dialog bind:this={dialog}>

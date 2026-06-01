@@ -8,6 +8,7 @@
 	import { PUBLIC_API_URL } from '$env/static/public';
     import { onMount } from 'svelte';
 	import { notificaciones } from '../stores/notifications';
+	import { toast } from 'svelte-sonner';
 
     type Canal = {
 		id_canal: number,
@@ -204,12 +205,20 @@
         labelNombre="nombre"
         onclose={invalidateAll}
         onAnhadir={async (item) => {
-            await fetch(`${PUBLIC_API_URL}/users/me/channels/${item.id_canal}`, {
-                method: 'POST',
-                credentials: 'include',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ id_canal: item.id_canal })
-            });
+            try {
+                const res = await fetch(`${PUBLIC_API_URL}/users/me/channels/${item.id_canal}`, {
+                    method: 'POST',
+                    credentials: 'include',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id_canal: item.id_canal })
+                });
+                if (!res.ok) {
+                    const data = await res.json();
+                    toast.error(data.detail ?? 'Error al unirse al canal');
+                }
+            } catch {
+                toast.error('Error de conexión');
+            }
         }}
     />
     <DialogoBuscar
@@ -219,12 +228,20 @@
         labelNombre="username"
         onclose={invalidateAll}
         onAnhadir={async (item) => {
-            await fetch(`${PUBLIC_API_URL}/users/me/friends/${item.id_usuario}`, {
-                method: 'POST',
-                credentials: 'include',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ id_usuario: item.id_usuario })
-            });
+            try {
+                const res = await fetch(`${PUBLIC_API_URL}/users/me/friends/${item.id_usuario}`, {
+                    method: 'POST',
+                    credentials: 'include',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id_usuario: item.id_usuario })
+                });
+                if (!res.ok) {
+                    const data = await res.json();
+                    toast.error(data.detail ?? 'Error al añadir amigo');
+                }
+            } catch {
+                toast.error('Error de conexión');
+            }
         }}
     />
     {#if esAdmin}
