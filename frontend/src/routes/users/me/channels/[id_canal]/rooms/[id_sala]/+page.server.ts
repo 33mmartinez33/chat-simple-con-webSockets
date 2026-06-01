@@ -17,5 +17,15 @@ export async function load({ fetch, params, cookies }) {
 
 
 
-    return { id_canal, id_sala, mensajes, infoUser, canales, amigos, infoSala, canal, salas };
+    return { 
+        id_canal: Number(id_canal), 
+        id_sala: Number(id_sala), 
+        mensajes, 
+        infoUser, 
+        canales, 
+        amigos, 
+        infoSala, 
+        canal, 
+        salas 
+    };
 }

@@ -13,5 +13,5 @@ export async function load({ fetch, params, cookies }) {
     ]);
 
 
-    return { id_usuario2, mensajes, infoAmigo, infoUser, canales, amigos };
+    return { id_usuario2: Number(id_usuario2), mensajes, infoAmigo, infoUser, canales, amigos };
 }

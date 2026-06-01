@@ -30,6 +30,7 @@
     async function crear() {
         await fetch(`${PUBLIC_API_URL}/users/me/channels`, {
             method: 'POST',
+            credentials: 'include',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ nombre_canal, contenido_principal })
         });

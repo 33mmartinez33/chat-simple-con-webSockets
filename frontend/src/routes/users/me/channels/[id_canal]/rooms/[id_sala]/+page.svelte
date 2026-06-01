@@ -1,8 +1,10 @@
 <script lang="ts">
 	import { tick } from 'svelte';
 	import Sidebar from '../../../../../../../components/Sidebar.svelte';
-	import { PUBLIC_WS_URL } from '$env/static/public';
+	import { PUBLIC_API_URL, PUBLIC_WS_URL } from '$env/static/public';
 	import { toast, Toaster } from 'svelte-sonner';
+	import { notificaciones } from '../../../../../../../stores/notifications.js';
+	import { browser } from '$app/environment';
     // import { beforeNavigate } from '$app/navigation';
 
     type Mensajes = {
@@ -11,13 +13,6 @@
         username: string,
         id_usuario_emisor: number,
         fecha: Date
-    };
-    type Usuario = {
-        id_usuario: number,
-        email: string,
-        username: string,
-        fecha_de_nacimiento: Date,
-        fecha_de_alta: Date
     };
     type Canal = {
 		id_canal: number,
@@ -39,7 +34,6 @@
 
     let { data } = $props();
     let mensajes: Mensajes[] = $state([]);
-    let infoUser: Usuario = $derived(data.infoUser ?? {});
     let id_usuario: number = $derived(Number(data.infoUser.id_usuario ?? {}));
     let sala: Sala = $derived(data.infoSala ?? {});
     let canales: Canal[] = $derived(data.canales ?? []);
@@ -82,9 +76,19 @@
     }
     
     $effect(() => {
+        if (!browser) return;
         mensajes = data.mensajes ?? [];
-        infoUser = data.infoUser ?? {};
 
+         // Marcar notificaciones de esta sala como leídas
+        fetch(`${PUBLIC_API_URL}/users/me/notifications/read`, {
+            method: 'PATCH',
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id_sala: data.id_sala })
+        });
+
+        // Limpiar del store local
+        notificaciones.update(n => n.filter(notif => notif.id_sala !== data.id_sala));
         // cierra el ws anterior y abre uno nuevo
         if (ws) {
             // cierreIntencionado = true;
@@ -246,5 +250,6 @@
     input {
         width: 99%;
         flex-shrink: 0;
-    }    
+        background-color: var(--bg-secondary);
+    }
 </style>

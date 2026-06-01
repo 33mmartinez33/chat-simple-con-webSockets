@@ -74,3 +74,19 @@
         {/if}
     </div>
 </dialog>
+
+<style>
+    .resultado-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 6px 10px;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: background 0.15s;
+    }
+
+    .resultado-item:hover {
+        background: color-mix(in srgb, var(--bg-tertiary) 60%, var(--accent-tertiary));
+    }
+</style>

@@ -2,7 +2,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 
-from .routers import auth, channels, friends, messages, rooms, users, ws
+from .routers import auth, channels, friends, messages, notifications, rooms, users, ws
 from .database import create_db_and_tables
 from .config import ALLOWED_ORIGINS
 from fastapi.middleware.cors import CORSMiddleware
@@ -31,4 +31,5 @@ app.include_router(channels.router)
 app.include_router(rooms.router)
 app.include_router(messages.router)
 app.include_router(friends.router)
+app.include_router(notifications.router)
 app.include_router(ws.router)

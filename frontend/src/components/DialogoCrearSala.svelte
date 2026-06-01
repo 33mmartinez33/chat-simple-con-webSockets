@@ -31,6 +31,7 @@
     async function crear() {
         await fetch(`${PUBLIC_API_URL}/users/me/channels/${id_canal}/rooms`, {
             method: 'POST',
+            credentials: 'include',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ nombre_sala, tipo })
         });

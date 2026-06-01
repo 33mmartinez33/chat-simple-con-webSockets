@@ -96,6 +96,7 @@ async def get_current_user(session: Annotated[Session, Depends(get_session)], ac
         raise credentials_exception
     return user
 
+UserDependency = Annotated[User, Depends(get_current_user)]
 
 # Comprobar el origen de la cookie (para ws)
 async def verify_origin(websocket: WebSocket):
@@ -141,5 +142,3 @@ def son_amigos(session: Session, id_usuario1: int, id_usuario2: int):
             Amigos.id_usuario2 == mayor
         )
     ).first())
-
-UserDependency = Annotated[User, Depends(get_current_user)]

@@ -5,7 +5,7 @@
         id_canal: number;
         nombre: string;
         contenido_principal: string;
-        rol: "PARTICIPANTE" | "ADMIN";
+        rol: "participante" | "administrador";
     };
 
     type Sala = {
@@ -14,13 +14,13 @@
         nombre_sala: string;
     }
 
-    type Usuario = {
-        id_usuario: number;
-        username: string;
-        email: string;
-        fecha_de_nacimiento: Date;
-        fecha_de_alta: Date;
-    }
+    // type Usuario = {
+    //     id_usuario: number;
+    //     username: string;
+    //     email: string;
+    //     fecha_de_nacimiento: Date;
+    //     fecha_de_alta: Date;
+    // }
 
     type Amigo = {
         id_amigo: number;
@@ -31,7 +31,7 @@
 
 
     let { data } = $props();
-    let infoUser: Usuario = $derived(data.infoUser ?? {});
+    // let infoUser: Usuario = $derived(data.infoUser);
     let canales: Canal[] = $derived(data.canales ?? []);
     let salas: Sala[] = $derived(data.salas ?? []);
     let amigos: Amigo[] = $derived(data.amigos ?? []);
@@ -48,7 +48,6 @@
 </main>
 
 <Sidebar
-    id_usuario={infoUser.id_usuario}
     canales={canales}
     amigos={amigos}
     canal={canal}

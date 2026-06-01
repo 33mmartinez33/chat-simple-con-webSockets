@@ -1,5 +1,6 @@
-from datetime import date
+from datetime import date, datetime
 from enum import Enum
+from typing import Optional
 
 from pydantic import BaseModel, EmailStr, Field
 
@@ -57,3 +58,17 @@ class SalaUpdate(BaseModel):
 
 class MensajeWs(BaseModel):
     contenido: str = Field(min_length=1, max_length=4000)
+
+class NotificacionResponse(BaseModel):
+    id_notificacion: int
+    contenido: str
+    id_mensaje: int
+    tipo: str
+    fecha: datetime
+    id_sala: Optional[int] = None
+    id_canal: Optional[int] = None
+    id_usuario_emisor: Optional[int] = None
+
+class MarcarLeidasRequest(BaseModel):
+    id_sala: Optional[int] = None
+    id_usuario_emisor: Optional[int] = None

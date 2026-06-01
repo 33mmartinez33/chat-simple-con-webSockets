@@ -12,7 +12,7 @@
     onMount (() => {
         console.log('sesionExpirada:', data.sesionExpirada);
         if (data.sesionExpirada) {
-            toast.error('Sesioón expirada')
+            toast.error('Sesión expirada')
         }
     })
 

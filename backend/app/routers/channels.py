@@ -14,14 +14,14 @@ router = APIRouter(tags=["channels"])
 
 # Ver todos los canales
 @router.get("/channels")
-async def get_todos_canales(_current_user: UserDependency, q: str, session: SessionDep):
+async def get_todos_canales(current_user: UserDependency, session: SessionDep, q: str = ""):
+    ids_usuario = select(RolUsuarioCanal.id_canal).where(
+        RolUsuarioCanal.id_usuario == current_user.id_usuario
+    )
+    query = select(Canales).where(Canales.id_canal.not_in(ids_usuario))
     if q:
-        canales_all = session.exec(
-            select(Canales).where(Canales.nombre.contains(q))
-        ).all()
-    else:
-        canales_all = session.exec(select(Canales)).all()
-    return canales_all
+        query = query.where(Canales.nombre.ilike(f"%{q}%"))
+    return session.exec(query).all()
 
 
 # Ver los canales del usuario autenticado

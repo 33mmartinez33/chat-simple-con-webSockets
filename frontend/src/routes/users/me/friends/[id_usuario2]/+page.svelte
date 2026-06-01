@@ -1,8 +1,10 @@
 <script lang="ts">
     import { tick } from 'svelte';
 	import Sidebar from '../../../../../components/Sidebar.svelte';
-    import { PUBLIC_WS_URL } from "$env/static/public";
+    import { PUBLIC_API_URL, PUBLIC_WS_URL } from "$env/static/public";
 	import { toast, Toaster } from 'svelte-sonner';
+	import { notificaciones } from '../../../../../stores/notifications.js';
+	import { browser } from '$app/environment';
     // import { beforeNavigate } from '$app/navigation';
 
     type Mensajes = {
@@ -80,8 +82,20 @@
     }
     
     $effect(() => {
+        if (!browser) return;
         mensajes = data.mensajes ?? [];
         infoAmigo = data.infoAmigo ?? {};
+
+        // Marcar notificaciones de este DM como leídas
+        fetch(`${PUBLIC_API_URL}/users/me/notifications/read`, {
+            method: 'PATCH',
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id_usuario_emisor: data.id_usuario2 })
+        });
+
+        // Limpiar del store local
+        notificaciones.update(n => n.filter(notif => notif.id_usuario_emisor !== data.id_usuario2));
 
         // cierra el ws anterior y abre uno nuevo
         if (ws) {
@@ -239,5 +253,6 @@
     input {
         width: 99%;
         flex-shrink: 0;
+        background-color: var(--bg-secondary);
     }
 </style>
