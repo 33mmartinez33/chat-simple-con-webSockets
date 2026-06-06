@@ -12,7 +12,9 @@ router = APIRouter(tags=["users"])
 
 # USUARIOS
 
-# Ver todos los usuarios
+# Retorna todos los usuarios. Si se pasa q, filtra por username (búsqueda parcial)
+# Parámetros de query:
+#   q: texto opcional para filtrar por username
 @router.get("/users")
 async def get_todos_usuarios(_current_user: Annotated[User, Depends(get_current_user)], session: SessionDep, q: str | None = None):
     if q:
@@ -24,30 +26,33 @@ async def get_todos_usuarios(_current_user: Annotated[User, Depends(get_current_
     return usuarios
 
 
-# Ver info de usuario autenticado
+# Retorna los datos del usuario autenticado actualmente
 @router.get("/users/me")
 async def read_users_me(
     current_user: Annotated[User, Depends(get_current_user)]):
     return current_user
 
 
-
-# Actualizar usuario
+# Actualiza los datos del usuario autenticado
+# Solo se aplican los campos incluidos en el body (exclude_unset)
+# Si se cambia la contraseña, se hashea antes de guardar
+# Parámetros:
+#   nuevos_datos: campos a actualizar (todos opcionales)
+# Retorna el usuario con los datos actualizados
 @router.put("/users/me")
 async def actualizar_usuario(nuevos_datos: UsuarioUpdate, current_user: Annotated[User, Depends(get_current_user)], session: SessionDep):
-    usuario_db = session.get(Usuarios, current_user.id_usuario) #Se obtienen los datos de usuario del currentuser
+    usuario_db = session.get(Usuarios, current_user.id_usuario)
     if not usuario_db:
-        raise HTTPException(status_code=404, detail="Usuario no encontrado") # si por lo que sea falla, devuelve un error
-    
+        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+
     elif session.exec(
         select(Usuarios).where(
             Usuarios.username == nuevos_datos.username
-        ).first()): # Por otro lado, si al intentar cambiar el username resulta que ya esta en uso, devuelve el error
-
+        ).first()):
         raise HTTPException(status_code=400, detail="Ese username ya esta en uso")
-    # si el usuario cambia la contrasenha se hashea, no es elif porque puede cambiar el username tambien 
 
-    if nuevos_datos.contrasenha != None:        
+    # Si se cambia la contraseña, se hashea antes de persistir
+    if nuevos_datos.contrasenha != None:
         nuevos_datos.contrasenha = get_password_hash(nuevos_datos.contrasenha)
 
     nuevos_datos = nuevos_datos.model_dump(exclude_unset=True)
@@ -59,13 +64,14 @@ async def actualizar_usuario(nuevos_datos: UsuarioUpdate, current_user: Annotate
     return usuario_db
 
 
-# Eliminar usuario
+# Elimina la cuenta del usuario autenticado y borra la cookie de sesión
+# Retorna HTTP 204 sin contenido
 @router.delete("/users/me")
 async def elimina_usuario(response: Response, current_user: Annotated[User, Depends(get_current_user)], session: SessionDep):
     usuario_db = session.get(Usuarios, current_user.id_usuario)
     if not usuario_db:
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
-   
+
     session.delete(usuario_db)
     session.commit()
 

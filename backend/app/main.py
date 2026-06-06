@@ -8,6 +8,7 @@ from .config import ALLOWED_ORIGINS
 from fastapi.middleware.cors import CORSMiddleware
 
 
+# Crea las tablas al arrancar y cede el control a FastAPI durante la vida de la app
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
     create_db_and_tables()  # se ejecuta al arrancar
@@ -17,9 +18,10 @@ async def lifespan(_app: FastAPI):
 app = FastAPI(title="Nexus API", version="1.0", lifespan=lifespan)
 
 
+# CORS: solo se permiten los orígenes del frontend definidos en config
 app.add_middleware(
     CORSMiddleware,
-    allow_origins= ALLOWED_ORIGINS,  
+    allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH"],
     allow_headers=["Content-Type", "Authorization"],

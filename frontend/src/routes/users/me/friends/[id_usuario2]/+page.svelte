@@ -52,41 +52,45 @@
     // let navegandoALogin = false
     let listaMensajes: HTMLDivElement;
 
-
     // beforeNavigate (({ to }) => {
     //     if (to?.route.id === '/login' || to?.url.pathname === '/login') {
     //         navegandoALogin = true;
     //     }
     // })
 
+    // Espera a que Svelte actualice el DOM y luego hace scroll hasta el último mensaje
     async function scrollAbajo() {
-        await tick(); // espera a que svelte actualice el DOM
+        await tick();
         listaMensajes.scrollTop = listaMensajes.scrollHeight;
     }
 
+    // Envía el mensaje por WebSocket y lo añade localmente con id_mensaje = -1
+    // El id definitivo llega por el evento onmessage y reemplaza la entrada temporal
     function enviarMensaje() {
         if (!contenido.trim()) return;
 
-        // añadir localmente de forma inmediata
+        // Añadir localmente de forma inmediata para que la UI sea instantánea
         mensajes = [...mensajes, {
-        id_mensaje: -1,
-        contenido,
-        username: data.infoUser.username,
-        id_usuario_emisor: id_usuario,
-        fecha: new Date()
-    }];
+            id_mensaje: -1,
+            contenido,
+            username: data.infoUser.username,
+            id_usuario_emisor: id_usuario,
+            fecha: new Date()
+        }];
 
         ws.send(JSON.stringify({ contenido }));
         contenido = '';
         scrollAbajo();
     }
-    
+
+    // Efecto reactivo: se ejecuta al abrir el DM o cuando cambia el amigo seleccionado
+    // Abre un nuevo WebSocket, marca las notificaciones como leídas y carga los mensajes
     $effect(() => {
         if (!browser) return;
         mensajes = data.mensajes ?? [];
         infoAmigo = data.infoAmigo ?? {};
 
-        // Marcar notificaciones de este DM como leídas
+        // Marcar notificaciones de este DM como leídas en el servidor
         fetch(`${PUBLIC_API_URL}/users/me/notifications/read`, {
             method: 'PATCH',
             credentials: 'include',
@@ -94,17 +98,16 @@
             body: JSON.stringify({ id_usuario_emisor: data.id_usuario2 })
         });
 
-        // Limpiar del store local
+        // Limpiar del store local para que el badge desaparezca de inmediato
         notificaciones.update(n => n.filter(notif => notif.id_usuario_emisor !== data.id_usuario2));
 
-        // cierra el ws anterior y abre uno nuevo
+        // Cierra el WebSocket anterior antes de abrir uno nuevo (cambio de amigo)
         if (ws) {
-            // cierreIntencionado = true;
             ws.close();
         }
-        
+
         ws = new WebSocket(`${PUBLIC_WS_URL}/ws/users/me/friends/${data.id_usuario2}`);
-                    
+
         ws.onerror = () => {
             toast.error('Error de conexión');
         };
@@ -122,10 +125,11 @@
 
         ws.onmessage = (event) => {
             const mensaje = JSON.parse(event.data);
-            if(mensaje.error) {
-                toast.error(mensaje.error);                
+            if (mensaje.error) {
+                toast.error(mensaje.error);
             } else {
                 if (mensaje.id_usuario_emisor === id_usuario) {
+                    // Reemplaza el mensaje temporal (id = -1) con el confirmado por el servidor
                     mensajes = mensajes.map(m => m.id_mensaje === -1 ? mensaje : m);
                 } else {
                     mensajes = [...mensajes, mensaje];
@@ -136,7 +140,7 @@
 
         scrollAbajo();
 
-        return () => ws.close(); // cleanup cuando cambia data o se destruye
+        return () => ws.close(); // Cleanup al cambiar de amigo o desmontar el componente
     });
 
 </script>

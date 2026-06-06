@@ -2,9 +2,10 @@
 	import { PUBLIC_API_URL } from "$env/static/public";
 	import { toast } from 'svelte-sonner';
 
-    interface  Props {
-        onclose: () => void;
-        ref?: { abrir: () => void };
+    // Diálogo para crear un nuevo canal con nombre y contenido principal
+    interface Props {
+        onclose: () => void;         // Callback al cerrar (se usa para invalidar datos del padre)
+        ref?: { abrir: () => void }; // Referencia externa para abrir el diálogo desde el padre
     }
 
     let { onclose, ref = $bindable() }: Props = $props();
@@ -13,6 +14,7 @@
     let nombre_canal = $state("");
     let contenido_principal = $state("");
 
+    // Expone el método abrir() al componente padre y limpia los campos al abrirse
     $effect(() => {
         ref = {
             abrir: () => {
@@ -23,11 +25,14 @@
         };
     });
 
+    // Cierra el diálogo y notifica al padre para que recargue los datos
     function cerrar() {
         dialog?.close();
         onclose();
     }
 
+    // Envía la petición de creación del canal y cierra el diálogo si fue exitosa
+    // Muestra un toast de error si el nombre ya existe o hay un fallo de red
     async function crear() {
         try {
             const res = await fetch(`${PUBLIC_API_URL}/users/me/channels`, {

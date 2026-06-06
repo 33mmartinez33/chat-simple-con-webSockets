@@ -12,7 +12,8 @@ router = APIRouter(tags=["notifications"])
 
 # NOTIFICACIONES
 
-# Ver notificaciones de un usuario
+# Retorna las notificaciones no leídas del usuario autenticado
+# Incluye datos del mensaje y la sala/canal o emisor según el tipo
 @router.get("/users/me/notifications", response_model=list[NotificacionResponse])
 async def get_user_notifications(
     current_user: Annotated[User, Depends(get_current_user)],
@@ -43,6 +44,13 @@ async def get_user_notifications(
         for usuario_notif, notif, mensaje in resultados
     ]
 
+
+# Marca como leídas las notificaciones del usuario filtradas por sala o por emisor DM
+# Parámetros del body:
+#   id_sala: si se proporciona, marca leídas las notificaciones de esa sala
+#   id_usuario_emisor: si se proporciona, marca leídas las notificaciones del DM con ese usuario
+# Retorna el número de notificaciones actualizadas
+# Lanza HTTP 422 si no se proporciona ninguno de los dos filtros
 @router.patch("/users/me/notifications/read")
 async def marcar_notificaciones_leidas(
     current_user: Annotated[User, Depends(get_current_user)],

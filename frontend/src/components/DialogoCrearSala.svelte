@@ -2,18 +2,20 @@
 	import { PUBLIC_API_URL } from "$env/static/public";
 	import { toast } from 'svelte-sonner';
 
-    interface  Props {
-        id_canal: number;
-        onclose: () => void;
-        ref?: { abrir: () => void };
+    // Diálogo para crear una nueva sala dentro de un canal (solo visible para admins)
+    interface Props {
+        id_canal: number;            // Canal donde se creará la sala
+        onclose: () => void;         // Callback al cerrar (se usa para invalidar datos del padre)
+        ref?: { abrir: () => void }; // Referencia externa para abrir el diálogo desde el padre
     }
 
     let { id_canal, onclose, ref = $bindable() }: Props = $props();
 
     let dialog = $state<HTMLDialogElement | null>(null);
     let nombre_sala = $state("");
-    let tipo = $state("texto");
+    let tipo = $state("texto"); // Valor por defecto: sala de texto
 
+    // Expone el método abrir() al componente padre y limpia los campos al abrirse
     $effect(() => {
         ref = {
             abrir: () => {
@@ -24,11 +26,14 @@
         };
     });
 
+    // Cierra el diálogo y notifica al padre para que recargue los datos
     function cerrar() {
         dialog?.close();
         onclose();
     }
 
+    // Envía la petición de creación de la sala y cierra el diálogo si fue exitosa
+    // Muestra un toast de error si hay algún problema en el servidor o de red
     async function crear() {
         try {
             const res = await fetch(`${PUBLIC_API_URL}/users/me/channels/${id_canal}/rooms`, {

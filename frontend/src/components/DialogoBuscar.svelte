@@ -1,11 +1,12 @@
 <script lang="ts">
+    // Diálogo reutilizable para buscar y añadir un ítem (canal o amigo) desde la API
     interface Props {
-        endpoint: string;
-        titulo: string;
-        labelNombre: string;
-        onclose: () => void;
-        onAnhadir: (item: any) => Promise<void>;
-        ref?: { abrir: () => void };
+        endpoint: string;           // URL base del endpoint de búsqueda (se añade ?q=...)
+        titulo: string;             // Título que se muestra en la cabecera del diálogo
+        labelNombre: string;        // Clave del objeto resultado que contiene el nombre a mostrar
+        onclose: () => void;        // Callback al cerrar el diálogo
+        onAnhadir: (item: any) => Promise<void>; // Callback al confirmar el añadido de un ítem
+        ref?: { abrir: () => void }; // Referencia externa para abrir el diálogo desde el padre
     }
 
     let { endpoint, titulo, labelNombre, onclose, onAnhadir, ref = $bindable() }: Props = $props();
@@ -15,6 +16,7 @@
     let filtrados = $state<any[]>([]);
     let timeout: any;
 
+    // Expone el método abrir() al componente padre mediante ref bindable
     $effect(() => {
         ref = {
             abrir: () => {
@@ -25,6 +27,8 @@
         };
     });
 
+    // Busca en el endpoint con debounce de 300ms para evitar llamadas por cada tecla
+    // Solo lanza la búsqueda si el texto tiene al menos 2 caracteres
     async function buscar() {
         clearTimeout(timeout);
         if (busqueda.length < 2) { filtrados = []; return; }
@@ -38,14 +42,17 @@
         }, 300);
     }
 
+    // Cierra el diálogo, limpia la búsqueda y llama al callback onclose
     function cerrar() {
         dialog?.close();
         busqueda = '';
         onclose();
     }
 
+    // Ejecuta el callback onAnhadir con el ítem seleccionado y luego cierra el diálogo
+    // Parámetros: item: objeto del resultado seleccionado
     async function anhadir(item: any) {
-        await onAnhadir(item)
+        await onAnhadir(item);
         cerrar();
     }
 </script>

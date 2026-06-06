@@ -16,20 +16,27 @@ SessionDep = Annotated[Session, Depends(get_session)]
 
 password_hash = PasswordHash.recommended()
 
-# hash precalculado de una contrasenha ficticia ("dummypassword") con propósito de prevenir ataques de temporización (timing attacks).
+# Hash precalculado de una contraseña ficticia para prevenir timing attacks:
+# si el usuario no existe, se ejecuta verify_password igualmente para que
+# el tiempo de respuesta no revele si el username es válido o no
 DUMMY_HASH = password_hash.hash("dummypassword")
 
 
-# para legibilidad y desacoplamiento
+# Verifica que plain_password coincida con hashed_password
+# Retorna True si coinciden, False en caso contrario
 def verify_password(plain_password, hashed_password):
-    return password_hash.verify(plain_password, hashed_password) # Devuelve true o false segun si la contrasenha coincide
+    return password_hash.verify(plain_password, hashed_password)
 
 
-# para legibilidad y desacoplamiento
+# Genera y retorna el hash bcrypt de la contraseña recibida
 def get_password_hash(password):
     return password_hash.hash(password)
 
 
+# Busca y retorna el usuario con id_usuario dado, o None si no existe
+# Parámetros:
+#   id_usuario: ID del usuario a buscar
+#   session: sesión activa de base de datos
 def get_user(id_usuario: int, session: Session):
     user_db = session.exec(
         select(Usuarios).where(
@@ -40,25 +47,34 @@ def get_user(id_usuario: int, session: Session):
     return user_db
 
 
+# Autentica al usuario verificando username y contraseña
+# Retorna el objeto Usuarios si las credenciales son correctas, False si no
+# Parámetros:
+#   username: nombre de usuario
+#   password: contraseña en texto plano
+#   session: sesión activa de base de datos
 def authenticate_user(username: str, password: str, session: Session):
-    # print("autenticando usuario")
     user = session.exec(
         select(Usuarios).where(
             Usuarios.username == username
         )
     ).first()
     if not user:
+        # Se ejecuta verify_password aunque el usuario no exista para evitar timing attacks
         verify_password(password, DUMMY_HASH)
         return False
-    
+
     if not verify_password(password, user.contrasenha):
         return False
-    
+
     return user
 
 
-
-
+# Genera un JWT firmado con el payload data y el tiempo de expiración indicado
+# Parámetros:
+#   data: diccionario con los claims a incluir en el token (ej. {"sub": id_usuario})
+#   expires_delta: tiempo de vida del token; si es None, expira en 15 minutos
+# Retorna el token JWT como string
 def create_access_token(data: dict, expires_delta: timedelta | None = None):
     to_encode = data.copy()
     if expires_delta:
@@ -71,8 +87,10 @@ def create_access_token(data: dict, expires_delta: timedelta | None = None):
     return encoded_jwt
 
 
-#FastAPI cachea las dependencias por request, por lo que get_session solo se ejecuta una vez aunque aparezca en múltiples sitios.
-# Obtiene el token directamente
+# FastAPI cachea las dependencias por request, por lo que get_session solo se ejecuta
+# una vez aunque aparezca en múltiples sitios.
+# Decodifica el JWT de la cookie, valida al usuario y lo retorna
+# Lanza HTTP 401 si el token es inválido, expirado o el usuario no existe
 async def get_current_user(session: Annotated[Session, Depends(get_session)], access_token: Annotated[str | None, Cookie()] = None):
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
@@ -96,9 +114,13 @@ async def get_current_user(session: Annotated[Session, Depends(get_session)], ac
         raise credentials_exception
     return user
 
+# Dependencia tipada para inyectar el usuario autenticado en los endpoints
 UserDependency = Annotated[User, Depends(get_current_user)]
 
-# Comprobar el origen de la cookie (para ws)
+
+# Dependencia para WebSocket: cierra la conexión con código 1008 si el origen no está permitido
+# Parámetros:
+#   websocket: conexión WebSocket entrante
 async def verify_origin(websocket: WebSocket):
     origin = websocket.headers.get("origin")
     if origin not in ALLOWED_ORIGINS:
@@ -106,7 +128,12 @@ async def verify_origin(websocket: WebSocket):
         raise WebSocketException(code=1008)
 
 
-# comprubea si el usuario es admin en el canal que se pasa por parametro
+# Comprueba si el usuario tiene rol de administrador en el canal indicado
+# Retorna True si es admin, False en caso contrario
+# Parámetros:
+#   session: sesión activa de base de datos
+#   id_usuario: ID del usuario a comprobar
+#   id_canal: ID del canal donde se verifica el rol
 def es_admin(session: Session, id_usuario: int, id_canal: int):
     return bool(session.exec(
         select(RolUsuarioCanal).where(
@@ -117,7 +144,12 @@ def es_admin(session: Session, id_usuario: int, id_canal: int):
     ).first())
 
 
-# comprubea si el rol es admin o participante
+# Comprueba si el usuario es admin o participante en el canal indicado
+# Retorna True si tiene alguno de los dos roles, False si no pertenece al canal
+# Parámetros:
+#   session: sesión activa de base de datos
+#   id_usuario: ID del usuario a comprobar
+#   id_canal: ID del canal donde se verifica el rol
 def es_participante_o_admin(session: Session, id_usuario: int, id_canal: int):
     return bool(session.exec(
         select(RolUsuarioCanal).where(
@@ -131,11 +163,16 @@ def es_participante_o_admin(session: Session, id_usuario: int, id_canal: int):
     ).first())
 
 
-# Comprueba si los 2 usuarios que se le pasa como parametro son amigos
+# Comprueba si dos usuarios son amigos
+# Retorna True si existe la relación de amistad, False si no
+# Parámetros:
+#   session: sesión activa de base de datos
+#   id_usuario1, id_usuario2: IDs de los dos usuarios a comprobar
 def son_amigos(session: Session, id_usuario1: int, id_usuario2: int):
+    # Se ordena para cumplir la restricción id_usuario1 < id_usuario2 de la tabla
     menor = min(id_usuario1, id_usuario2)
     mayor = max(id_usuario1, id_usuario2)
-    
+
     return bool(session.exec(
         select(Amigos).where(
             Amigos.id_usuario1 == menor,

@@ -7,16 +7,19 @@ from sqlmodel import Field, Relationship, SQLModel
 # V2.0
 
 
+# Enum para los roles posibles de un usuario dentro de un canal
 class RolAdministradorParticipanteT(str, enum.Enum):
     ADMINISTRADOR = 'administrador'
     PARTICIPANTE = 'participante'
 
 
+# Enum para los tipos de sala disponibles: texto o voz
 class TipoSalaT(str, enum.Enum):
     TEXTO = 'texto'
     VOZ   = 'voz'
 
 
+# Tabla de usuarios registrados en la plataforma
 class Usuarios(SQLModel, table=True):
     __table_args__ = (
         PrimaryKeyConstraint('id_usuario', name='usuarios_pkey'),
@@ -40,6 +43,8 @@ class Usuarios(SQLModel, table=True):
     usuario_notificacion        : list['UsuarioNotificacion']  = Relationship(back_populates='usuarios')
 
 
+# Tabla de relaciones de amistad entre dos usuarios
+# La restricción id_usuario1 < id_usuario2 evita duplicados de la misma pareja
 class Amigos(SQLModel, table=True):
     __table_args__ = (
         CheckConstraint('id_usuario1 < id_usuario2', name='amigos_check_orden'),
@@ -56,6 +61,7 @@ class Amigos(SQLModel, table=True):
     usuarios_ : 'Usuarios' = Relationship(back_populates='amigos_id_usuario2', sa_relationship_kwargs={'foreign_keys': '[Amigos.id_usuario2]'})
 
 
+# Tabla de canales (servidores) creados por usuarios
 class Canales(SQLModel, table=True):
     __table_args__ = (
         ForeignKeyConstraint(['id_usuario_dueno'], ['usuarios.id_usuario'], name='canales_id_usuario_dueno_fkey'),
@@ -68,11 +74,12 @@ class Canales(SQLModel, table=True):
     nombre              : str           = Field(sa_column=Column('nombre', String(100), nullable=False))
     contenido_principal : Optional[str] = Field(default=None, sa_column=Column('contenido_principal', Text))
 
-    usuarios          : 'Usuarios'           = Relationship(back_populates='canales')
+    usuarios          : 'Usuarios'             = Relationship(back_populates='canales')
     rol_usuario_canal : list['RolUsuarioCanal'] = Relationship(back_populates='canales')
-    salas             : list['Salas']         = Relationship(back_populates='canales')
+    salas             : list['Salas']           = Relationship(back_populates='canales')
 
 
+# Tabla pivote que asigna un rol (admin o participante) a cada usuario en cada canal
 class RolUsuarioCanal(SQLModel, table=True):
     __tablename__ = 'rol_usuario_canal'
     __table_args__ = (
@@ -81,14 +88,15 @@ class RolUsuarioCanal(SQLModel, table=True):
         PrimaryKeyConstraint('id_usuario', 'id_canal', name='rol_usuario_canal_pkey')
     )
 
-    id_usuario : int                          = Field(sa_column=Column('id_usuario', Integer, primary_key=True))
-    id_canal   : int                          = Field(sa_column=Column('id_canal',   Integer, primary_key=True))
+    id_usuario : int                           = Field(sa_column=Column('id_usuario', Integer, primary_key=True))
+    id_canal   : int                           = Field(sa_column=Column('id_canal',   Integer, primary_key=True))
     rol        : RolAdministradorParticipanteT = Field(sa_column=Column('rol', Enum(RolAdministradorParticipanteT, values_callable=lambda cls: [member.value for member in cls], name='rol_administrador_participante_t'), nullable=False))
 
     canales  : 'Canales'  = Relationship(back_populates='rol_usuario_canal')
     usuarios : 'Usuarios' = Relationship(back_populates='rol_usuario_canal')
 
 
+# Tabla de salas dentro de un canal (texto o voz)
 class Salas(SQLModel, table=True):
     __table_args__ = (
         ForeignKeyConstraint(['id_canal'], ['canales.id_canal'], name='salas_id_canal_fkey'),
@@ -104,6 +112,8 @@ class Salas(SQLModel, table=True):
     mensajes : list['Mensajes'] = Relationship(back_populates='salas')
 
 
+# Tabla de mensajes, tanto de sala como de mensaje directo (DM)
+# La restricción garantiza que id_sala e id_usuario_receptor sean mutuamente excluyentes
 class Mensajes(SQLModel, table=True):
     __table_args__ = (
         CheckConstraint(
@@ -120,15 +130,16 @@ class Mensajes(SQLModel, table=True):
     contenido           : str               = Field(sa_column=Column('contenido', Text, nullable=False))
     id_usuario_emisor   : int               = Field(sa_column=Column('id_usuario_emisor', Integer, nullable=False))
     fecha               : datetime.datetime = Field(sa_column=Column('fecha', DateTime, nullable=False))
-    id_sala             : Optional[int]     = Field(default=None, sa_column=Column('id_sala', Integer))
-    id_usuario_receptor : Optional[int]     = Field(default=None, sa_column=Column('id_usuario_receptor', Integer))
+    id_sala             : Optional[int]     = Field(default=None, sa_column=Column('id_sala', Integer))            # None si es DM
+    id_usuario_receptor : Optional[int]     = Field(default=None, sa_column=Column('id_usuario_receptor', Integer)) # None si es de sala
 
-    salas          : Optional['Salas']         = Relationship(back_populates='mensajes')
-    usuarios       : 'Usuarios'                = Relationship(back_populates='mensajes_id_usuario_emisor',   sa_relationship_kwargs={'foreign_keys': '[Mensajes.id_usuario_emisor]'})
-    usuarios_      : Optional['Usuarios']      = Relationship(back_populates='mensajes_id_usuario_receptor', sa_relationship_kwargs={'foreign_keys': '[Mensajes.id_usuario_receptor]'})
-    notificaciones : list['Notificaciones']    = Relationship(back_populates='mensajes')
+    salas          : Optional['Salas']      = Relationship(back_populates='mensajes')
+    usuarios       : 'Usuarios'             = Relationship(back_populates='mensajes_id_usuario_emisor',   sa_relationship_kwargs={'foreign_keys': '[Mensajes.id_usuario_emisor]'})
+    usuarios_      : Optional['Usuarios']   = Relationship(back_populates='mensajes_id_usuario_receptor', sa_relationship_kwargs={'foreign_keys': '[Mensajes.id_usuario_receptor]'})
+    notificaciones : list['Notificaciones'] = Relationship(back_populates='mensajes')
 
 
+# Tabla de notificaciones generadas por mensajes no leídos
 class Notificaciones(SQLModel, table=True):
     __table_args__ = (
         ForeignKeyConstraint(['id_mensaje'], ['mensajes.id_mensaje'], name='notificaciones_id_mensaje_fkey'),
@@ -140,9 +151,10 @@ class Notificaciones(SQLModel, table=True):
     contenido_notif : str = Field(sa_column=Column('contenido_notif', Text, nullable=False))
 
     mensajes             : 'Mensajes'                  = Relationship(back_populates='notificaciones')
-    usuario_notificacion : list['UsuarioNotificacion'] = Relationship(back_populates='notificaciones')
+    usuario_notificacion : list['UsuarioNotificacion']  = Relationship(back_populates='notificaciones')
 
 
+# Tabla pivote que relaciona notificaciones con usuarios y registra si fueron leídas
 class UsuarioNotificacion(SQLModel, table=True):
     __tablename__ = 'usuario_notificacion'
     __table_args__ = (

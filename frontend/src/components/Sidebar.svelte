@@ -50,8 +50,11 @@
     let dialogoCrearSala = $state<any>(null);
     let dialogoCanal = $state<any>(null);
     let dialogoAmigo = $state<any>(null);
+    // mounted evita renderizar los diálogos en SSR (solo existen en el navegador)
     let mounted = $state(false);
 
+    // Mapa reactivo de conteo de notificaciones no leídas por sala
+    // Retorna un objeto { [id_sala]: cantidad }
     const notifPorSala = $derived(
         Object.fromEntries(
             ($notificaciones)
@@ -63,6 +66,8 @@
         )
     );
 
+    // Mapa reactivo de conteo de notificaciones no leídas por amigo (DM)
+    // Retorna un objeto { [id_usuario_emisor]: cantidad }
     const notifPorAmigo = $derived(
         Object.fromEntries(
             ($notificaciones)
@@ -78,16 +83,26 @@
         mounted = true;
     });
 
+    // true si el usuario tiene rol administrador en el canal activo
     const esAdmin = $derived(canal?.rol?.toLowerCase() === 'administrador');
-    const rol = $derived(esAdmin ? "Adm": "Std");
+    // Etiqueta abreviada del rol para mostrar en la UI ("Adm" / "Std")
+    const rol = $derived(esAdmin ? "Adm" : "Std");
 
-    function irCanal(id_canal: number){
+    // Navega a la vista principal del canal indicado
+    // Parámetros: id_canal: ID del canal destino
+    function irCanal(id_canal: number) {
         goto(`/users/me/channels/${id_canal}`);
     }
-    function irSala(id_canal: number, id_sala: number){
+
+    // Navega a la vista de chat de una sala concreta
+    // Parámetros: id_canal: canal al que pertenece la sala; id_sala: sala destino
+    function irSala(id_canal: number, id_sala: number) {
         goto(`/users/me/channels/${id_canal}/rooms/${id_sala}`);
     }
-    function irAmigo(id_usuario2: number){
+
+    // Navega al chat de mensaje directo con el amigo indicado
+    // Parámetros: id_usuario2: ID del amigo destino
+    function irAmigo(id_usuario2: number) {
         goto(`/users/me/friends/${id_usuario2}`);
     }
 </script>
